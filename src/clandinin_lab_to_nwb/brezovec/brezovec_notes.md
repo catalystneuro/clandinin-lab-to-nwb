@@ -1,6 +1,6 @@
 # Notes concerning the brezovec conversion
 
-## Some useful info 
+## Some useful info
 
 Fictrac:
 https://github.com/rjdmoore/fictrac/tree/master
@@ -25,10 +25,11 @@ https://datadryad.org/stash
 Have not find it yet though.
 
 
-##  Pending questions 
+##  Pending questions
 * What about the rest of the subjects / sessions?
+* What about the video files?
 * What about the fictrac header?
-* Why are the bruker files not in tiff format? In fact 
+* Why are the bruker files not in tiff format? In fact
 * What are the json files in the imports directory?
 * Are the nifti files pre-processed in some way (are we getting the motion corrected ones?) or are they raw?
 * Confirm that the ANT algorithm is only applied at the population level and not at the session one.
@@ -51,6 +52,8 @@ Device:
 There should be nine subjects according to the paper
 Each session should be around 30 minutes. See figure 1 of the paper.
 
+
+Looking at some of the analysis code it seems that they might have some segmentation data.
 ### Dimensions, shape structure of the nifti files
 
 
@@ -83,7 +86,7 @@ Advanced Normalization Tools, ANTs
 Here a tutorial:
 https://andysbrainbook.readthedocs.io/en/latest/ANTs/ANTs_Overview.html
 
-This makes me think that the files .nii are pre-processed and that the post-processed file (after the drfit correction) are also ni files. In the data folder there is this division between anat and func which maybe is this? 
+This makes me think that the files .nii are pre-processed and that the post-processed file (after the drfit correction) are also ni files. In the data folder there is this division between anat and func which maybe is this?
 
 
 ### Frequency on fictrac
@@ -118,8 +121,6 @@ https://en.wikipedia.org/wiki/Neuroimaging_Informatics_Technology_Initiative
 The ones in the paper are the version 1 according to the paper.
 What about:
 nifti1 vs nifti2
-Main difference is the header size it seems. Probably not relevant for this conversion. 
+Main difference is the header size it seems. Probably not relevant for this conversion.
 
 There is also dicom format which has way more structure and is not only for neuroimaging.
-
-
