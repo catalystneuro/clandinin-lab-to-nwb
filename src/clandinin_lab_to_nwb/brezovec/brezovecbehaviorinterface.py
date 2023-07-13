@@ -16,7 +16,7 @@ class BrezovecBehaviorInterface(BaseDataInterface):
 
         return metadata
 
-    def run_conversion(self, nwbfile: NWBFile, metadata: dict):
+    def add_to_nwb(self, nwbfile: NWBFile, metadata: dict):
         # All the custom code to write to PyNWB
 
         return nwbfile
