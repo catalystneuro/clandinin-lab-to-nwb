@@ -24,6 +24,14 @@ https://datadryad.org/stash
 
 Have not find it yet though.
 
+[Their repo](https://github.com/ClandininLab/brainsss)
+This is the one that was used in the experiment according to personal communication. There is a new code base here though:
+
+[New repo](https://github.com/ClandininLab/brainsss2)
+
+[The file organization](https://github.com/ClandininLab/brainsss2/blob/main/new_file_organization.md)
+
+[Old file organization](https://github.com/ClandininLab/brainsss2/blob/main/file_organization.md)
 
 ##  Pending questions
 * What about the rest of the subjects / sessions?
@@ -88,6 +96,35 @@ https://andysbrainbook.readthedocs.io/en/latest/ANTs/ANTs_Overview.html
 
 This makes me think that the files .nii are pre-processed and that the post-processed file (after the drfit correction) are also ni files. In the data folder there is this division between anat and func which maybe is this?
 
+Importantly, we have two channels, and here is general information about what the channels mean:
+
+```bash
+imports
+└── 20220329
+    └── fly_2
+        ├── anat_0  # higher resolution image collected for anatomical registration
+        │   └── TSeries-12172018-1322-009
+        │       ├── References
+        │       ├── TSeries-12172018-1322-009.xml
+        │       ├── TSeries-12172018-1322-009_channel_1.nii  # tdTomato channel - used for primary anatomy
+        │       └── TSeries-12172018-1322-009_channel_2.nii  # GCaMP channel - not used
+        ├── fly.json
+        └── func_0  # lower resolution image collected for functional imaging
+            ├── 2022-03-29.hdf5
+            └── TSeries-12172018-1322-005
+                ├── References
+                ├── TSeries-12172018-1322-005.xml
+                ├── TSeries-12172018-1322-005_Cycle00001_VoltageOutput_001.xml
+                ├── TSeries-12172018-1322-005_Cycle00001_VoltageRecording_001.csv
+                ├── TSeries-12172018-1322-005_Cycle00001_VoltageRecording_001.xml
+                ├── TSeries-12172018-1322-005_channel_1.nii # tdTomato channel - used for motion correction and registration
+                └── TSeries-12172018-1322-005_channel_2.nii # GCaMP channel - used for functional imaging readout
+
+```
+
+[Link](https://github.com/ClandininLab/brainsss2/blob/5ec2ddad6793d6115c1ee80302d5cdf8019fe995/file_organization.md?plain=1#L21-L22C88)
+
+
 
 ### Frequency on fictrac
 
@@ -124,3 +161,66 @@ nifti1 vs nifti2
 Main difference is the header size it seems. Probably not relevant for this conversion.
 
 There is also dicom format which has way more structure and is not only for neuroimaging.
+
+### Information extracted from XML in the Bruker format
+
+We have the name of the channels in the tag File of the XML. Here some samples
+```python
+--------------------
+Tag: File
+Element: File, Path: PVScan/Sequence/Frame/File, Attributes: {'channel': '1', 'channelName': 'Red', 'filename': 'TSeries-02282020-0943-001_Cycle00001_Ch1_000001.ome.tif'}, Text: None
+Element: File, Path: PVScan/Sequence/Frame/File, Attributes: {'channel': '2', 'channelName': 'Green', 'filename': 'TSeries-02282020-0943-001_Cycle00001_Ch2_000001.ome.tif'}, Text: None
+Element: File, Path: PVScan/Sequence/Frame/File, Attributes: {'channel': '1', 'channelName': 'Red', 'filename': 'TSeries-02282020-0943-001_Cycle00001_Ch1_000002.ome.tif'}, Text: None
+Element: File, Path: PVScan/Sequence/Frame/File, Attributes: {'channel': '2', 'channelName': 'Green', 'filename': 'TSeries-02282020-0943-001_Cycle00001_Ch2_000002.ome.tif'}, Text: None
+Element: File, Path: PVScan/Sequence/Frame/File, Attributes: {'channel': '1', 'channelName': 'Red', 'filename': 'TSeries-02282020-0943-001_Cycle00001_Ch1_000003.ome.tif'}, Text: None
+--------------------
+
+```
+
+Questions for Szonja:
+* What is a cycle? The sequence tags in the XML file look like this. Here some samples:
+
+```python
+--------------------
+Tag: Sequence
+Element: Sequence, Path: PVScan/Sequence, Attributes: {'type': 'TSeries ZSeries Element', 'cycle': '1', 'time': '16:12:42.7991147', 'bidirectionalZ': 'False', 'xYStageGridDefined': 'False', 'xYStageGridNumXPositions': '0', 'xYStageGridNumYPositions': '0', 'xYStageGridOverlapPercentage': '10', 'xYStageGridXOverlap': '10', 'xYStageGridYOverlap': '10'}, Text:
+
+Element: Sequence, Path: PVScan/Sequence, Attributes: {'type': 'TSeries ZSeries Element', 'cycle': '2', 'time': '16:42:46.1087425', 'bidirectionalZ': 'False', 'xYStageGridDefined': 'False', 'xYStageGridNumXPositions': '0', 'xYStageGridNumYPositions': '0', 'xYStageGridOverlapPercentage': '10', 'xYStageGridXOverlap': '10', 'xYStageGridYOverlap': '10'}, Text:
+
+Element: Sequence, Path: PVScan/Sequence, Attributes: {'type': 'TSeries ZSeries Element', 'cycle': '3', 'time': '16:42:46.1187481', 'bidirectionalZ': 'False', 'xYStageGridDefined': 'False', 'xYStageGridNumXPositions': '0', 'xYStageGridNumYPositions': '0', 'xYStageGridOverlapPercentage': '10', 'xYStageGridXOverlap': '10', 'xYStageGridYOverlap': '10'}, Text:
+
+Element: Sequence, Path: PVScan/Sequence, Attributes: {'type': 'TSeries ZSeries Element', 'cycle': '4', 'time': '16:42:46.1187481', 'bidirectionalZ': 'False', 'xYStageGridDefined': 'False', 'xYStageGridNumXPositions': '0', 'xYStageGridNumYPositions': '0', 'xYStageGridOverlapPercentage': '10', 'xYStageGridXOverlap': '10', 'xYStageGridYOverlap': '10'}, Text:
+
+Element: Sequence, Path: PVScan/Sequence, Attributes: {'type': 'TSeries ZSeries Element', 'cycle': '5', 'time': '16:42:46.1287534', 'bidirectionalZ': 'False', 'xYStageGridDefined': 'False', 'xYStageGridNumXPositions': '0', 'xYStageGridNumYPositions': '0', 'xYStageGridOverlapPercentage': '10', 'xYStageGridXOverlap': '10', 'xYStageGridYOverlap': '10'}, Text:
+
+--------------------
+```
+* The unique tags in the XML file are: `{'PVStateShard', 'File', 'ExtraParameters', 'SystemID', 'Sequence', 'VoltageOutput', 'IndexedValue', 'SystemIDs', 'SubindexedValue', 'SubindexedValues', 'PVScan', 'Frame', 'PVStateValue'}`. I wonder if they are described somewhere.
+*
+
+# Notes about FicTrac
+
+The diagram indicating the meaning of the header figures from the FicTrac paper:
+
+### Figure 1
+![The paper ](./images/header_diagram1.png)
+
+
+### Figure 2
+![Alt text](./images/header_diagram2.png)
+
+Why the blob pattern?
+
+> The pattern applied to the ball must also be non-repetitive so
+that each view of the sphere is distinct. A free drawn pattern of
+blobs (e.g. Figure 2a) was determined empirically to be suffi-
+cient to satisfy this criterion. Finer details enable more precise
+matching but require a higher
+
+
+The definition of the configuration parameters can be find here:
+[Parameters Description](https://github.com/rjdmoore/fictrac/blob/master/doc/params.md)
+
+
+The radius is not stored, there is a variable called `roi_r` in the configuration but this is the radius of the ball in the camera space, not the real radius.
+The real radius is given in the paper though by its diamater (9 mm diameter, LAST-A-FOAM FR4615). This is the radius of the ball in the real world.

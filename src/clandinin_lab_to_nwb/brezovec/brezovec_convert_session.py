@@ -10,7 +10,6 @@ from clandinin_lab_to_nwb.brezovec import BrezovecNWBConverter
 
 
 def session_to_nwb(data_dir_path: Union[str, Path], output_dir_path: Union[str, Path], stub_test: bool = False):
-
     data_dir_path = Path(data_dir_path)
     output_dir_path = Path(output_dir_path)
     if stub_test:
@@ -23,29 +22,16 @@ def session_to_nwb(data_dir_path: Union[str, Path], output_dir_path: Union[str, 
     source_data = dict()
     conversion_options = dict()
 
-    # Add Recording
-    source_data.update(dict(Recording=dict()))
-    conversion_options.update(dict(Recording=dict()))
-
-    # Add LFP
-    source_data.update(dict(LFP=dict()))
-    conversion_options.update(dict(LFP=dict()))
-
-    # Add Sorting
-    source_data.update(dict(Sorting=dict()))
-    conversion_options.update(dict(Sorting=dict()))
-
-    # Add Behavior
-    source_data.update(dict(Behavior=dict()))
-    conversion_options.update(dict(Behavior=dict()))
+    # Add Fictrac
+    file_path = data_dir_path / "fictrac" / "fictrac-20200228_161226.dat"
+    source_data.update(dict(FicTrac=dict(file_path=str(file_path))))
+    conversion_options.update(dict(FicTrac=dict()))
 
     converter = BrezovecNWBConverter(source_data=source_data)
 
     # Add datetime to conversion
     metadata = converter.get_metadata()
-    datetime.datetime(
-        year=2020, month=1, day=1, tzinfo=ZoneInfo("US/Eastern")
-    )
+    datetime.datetime(year=2020, month=1, day=1, tzinfo=ZoneInfo("US/Eastern"))
     date = datetime.datetime.today()  # TO-DO: Get this from author
     metadata["NWBFile"]["session_start_time"] = date
 
@@ -55,17 +41,23 @@ def session_to_nwb(data_dir_path: Union[str, Path], output_dir_path: Union[str, 
     metadata = dict_deep_update(metadata, editable_metadata)
 
     # Run conversion
-    converter.run_conversion(metadata=metadata, nwbfile_path=nwbfile_path, conversion_options=conversion_options)
+    converter.run_conversion(
+        metadata=metadata,
+        nwbfile_path=nwbfile_path,
+        conversion_options=conversion_options,
+        overwrite=True,
+    )
 
 
 if __name__ == "__main__":
-
     # Parameters for conversion
-    data_dir_path = Path("/Directory/With/Raw/Formats/")
-    output_dir_path = Path("~/conversion_nwb/")
+    root_path = Path("/home/heberto/Clandinin-CN-data-share/")
+    data_dir_path = root_path / "brezovec_example_data"
+    output_dir_path = Path("/home/heberto/conversion_nwb/")
     stub_test = False
 
-    session_to_nwb(data_dir_path=data_dir_path,
-                    output_dir_path=output_dir_path,
-                    stub_test=stub_test,
-                    )
+    session_to_nwb(
+        data_dir_path=data_dir_path,
+        output_dir_path=output_dir_path,
+        stub_test=stub_test,
+    )

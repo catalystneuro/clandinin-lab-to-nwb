@@ -11,7 +11,8 @@ import polars as pl
 from neuroconv.basedatainterface import BaseDataInterface
 from neuroconv.utils import DeepDict
 
-class BrezovecBehaviorInterface(BaseDataInterface):
+
+class FicTracInterface(BaseDataInterface):
     """Behavior interface for Fictrack data as described in https://github.com/rjdmoore/fictrac"""
 
     keywords = [
@@ -55,7 +56,7 @@ class BrezovecBehaviorInterface(BaseDataInterface):
 
     def __init__(self, file_path: str):
         self.file_path = Path(file_path)
-        assert self.file_path.is_file(), f"FIle path does not exist: {self.file_path}"
+        assert self.file_path.is_file(), f"File path does not exist: {self.file_path}"
 
         # This should load the data lazily and prepare variables you need
         pass
@@ -69,10 +70,10 @@ class BrezovecBehaviorInterface(BaseDataInterface):
     def add_to_nwbfile(self, nwbfile: NWBFile, metadata: dict):
         # All the custom code to write to PyNWB
 
-        descriptions = BrezovecBehaviorInterface.column_to_description
+        descriptions = FicTracInterface.column_to_description
         columns = list(descriptions)[:23]
 
-        int_type_columns = BrezovecBehaviorInterface.int_type_columns
+        int_type_columns = FicTracInterface.int_type_columns
         column_to_type = lambda x: pl.Int64 if x in int_type_columns else pl.Float64
 
         polars_schema = {column: column_to_type(column) for column in columns}
@@ -87,7 +88,7 @@ class BrezovecBehaviorInterface(BaseDataInterface):
 
         # This is the difference between each timestamp in average
         time_delta = df_fitrac.select(pl.col("timestamp").diff().mean()).collect().item()
-        sampling_rate = 1000.0  / time_delta
+        sampling_rate = 1000.0 / time_delta
 
         description = "Fictrac data"
         processing_module = get_module(nwbfile=nwbfile, name="Behavior", description=description)
@@ -225,7 +226,7 @@ class BrezovecBehaviorInterface(BaseDataInterface):
         file_path = Path(file_path)
 
         int_type_columns = ["sequence_counter", "frame_counter"]
-        columns_name_in_order = list(BrezovecBehaviorInterface.column_to_description.keys())
+        columns_name_in_order = list(FicTracInterface.column_to_description.keys())
         with file_path.open("r", encoding="UTF-8") as file:
             for line in file:
                 line = line.strip()
