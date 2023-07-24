@@ -4,7 +4,7 @@ from pynwb.file import NWBFile
 from hdmf.backends.hdf5.h5_utils import H5DataIO
 from neuroconv.utils.json_schema import FolderPathType, FilePathType
 from neuroconv.tools.nwb_helpers import get_module
-from pynwb.behavior import SpatialSeries
+from pynwb.behavior import SpatialSeries, CompassDirection
 import polars as pl
 
 
@@ -54,7 +54,7 @@ class FicTracInterface(BaseDataInterface):
 
     int_type_columns = ["sequence_counter", "frame_counter"]
 
-    def __init__(self, file_path: str):
+    def __init__(self, file_path: FilePathType):
         self.file_path = Path(file_path)
         assert self.file_path.is_file(), f"File path does not exist: {self.file_path}"
 
@@ -87,8 +87,8 @@ class FicTracInterface(BaseDataInterface):
         )
 
         # This is the difference between each timestamp in average
-        time_delta = df_fitrac.select(pl.col("timestamp").diff().mean()).collect().item()
-        sampling_rate = 1000.0 / time_delta
+        sampling_period = df_fitrac.select(pl.col("timestamp").diff().mean()).collect().item()
+        sampling_rate = 1000.0 / sampling_period
 
         description = "Fictrac data"
         processing_module = get_module(nwbfile=nwbfile, name="Behavior", description=description)
@@ -102,9 +102,19 @@ class FicTracInterface(BaseDataInterface):
         df_cam_delta_rotation = df_fitrac.select(cam_delta_rotation_columns).collect()
 
         reference_frame = "camera"
+        units = "radians"
+        description = (
+            "Change in orientation since last frame, represented as rotation angle/axis (radians) in camera coordinates"
+            " (x: moving to the right, y down, z forward)."
+        )
         data = df_cam_delta_rotation.to_numpy()
         spatial_series = SpatialSeries(
-            name="cam_delta_rotation", data=data, reference_frame=reference_frame, rate=sampling_rate
+            name="cam_delta_rotation",
+            data=data,
+            reference_frame=reference_frame,
+            rate=sampling_rate,
+            units=units,
+            description=description,
         )
         processing_module.add_data_interface(spatial_series)
 

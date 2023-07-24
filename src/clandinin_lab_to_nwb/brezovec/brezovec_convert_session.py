@@ -25,7 +25,6 @@ def session_to_nwb(data_dir_path: Union[str, Path], output_dir_path: Union[str, 
     # Add Fictrac
     file_path = data_dir_path / "fictrac" / "fictrac-20200228_161226.dat"
     source_data.update(dict(FicTrac=dict(file_path=str(file_path))))
-    conversion_options.update(dict(FicTrac=dict()))
 
     converter = BrezovecNWBConverter(source_data=source_data)
 

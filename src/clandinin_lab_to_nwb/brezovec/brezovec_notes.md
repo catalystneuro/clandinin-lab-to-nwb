@@ -224,3 +224,17 @@ The definition of the configuration parameters can be find here:
 
 The radius is not stored, there is a variable called `roi_r` in the configuration but this is the radius of the ball in the camera space, not the real radius.
 The real radius is given in the paper though by its diamater (9 mm diameter, LAST-A-FOAM FR4615). This is the radius of the ball in the real world.
+
+There is a method to automatically estimate the transformation from camera frame to lab frame. From the appendix A in the paper:
+
+> If the square’s normal vector is parallel with
+the z (yaw) axis of the animal and the sides of the square are
+aligned with the x (forward) and y (right)
+
+Here you write:
+
+[Writer of the code in C++](https://github.com/rjdmoore/fictrac/blob/9ac055e52d89f49f492a8eb4e1f7c5b8cd6df40a/src/Trackball.cpp#L994-L1032)
+
+[Update values](https://github.com/rjdmoore/fictrac/blob/9ac055e52d89f49f492a8eb4e1f7c5b8cd6df40a/src/Trackball.cpp#L872-L899)
+
+It seems this is not used in the code base `c2a_t`.

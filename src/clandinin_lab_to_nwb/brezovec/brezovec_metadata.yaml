@@ -13,5 +13,5 @@ NWBFile:
 Subject:
   subject_id: TBD  # A unique identifier for the subject
   species: Drosophila melanogaster
-  age: 3-4D  # in ISO 8601, such as "P1W2D"
-  sex: "F"  # From paper
+  age: 3D/4D
+  sex: "F"  # From the methods in the paper
