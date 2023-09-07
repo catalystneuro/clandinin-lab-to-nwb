@@ -1,6 +1,6 @@
 NWBFile:
   related_publications:
-    https://doi.org/10.1101/2022.03.20.485047or link to APA or MLA citation of the publication
+    - https://doi.org/10.1101/2022.03.20.485047
   session_description:
     A rich text description of the experiment. Can also just be the abstract of the publication.
   institution: Stanford
@@ -9,8 +9,9 @@ NWBFile:
     - Brezovec, Luke
     - Berger, Andrew
     - Druckmann, Saul
-    - Clandinin, Thomas 
+    - Clandinin, Thomas
 Subject:
-  species: Drosophila
-  age: TBD  # in ISO 8601, such as "P1W2D"
-  sex: TBD  # One of M, F, U, or O
+  subject_id: TBD  # A unique identifier for the subject
+  species: Drosophila melanogaster
+  age: 3D/4D
+  sex: "F"  # From the methods in the paper

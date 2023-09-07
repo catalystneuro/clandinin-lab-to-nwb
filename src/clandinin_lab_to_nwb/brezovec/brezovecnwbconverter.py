@@ -6,15 +6,12 @@ from neuroconv.datainterfaces import (
     PhySortingInterface,
 )
 
-from clandinin_lab_to_nwb.brezovec import BrezovecBehaviorInterface
+from clandinin_lab_to_nwb.brezovec import FicTracInterface
 
 
 class BrezovecNWBConverter(NWBConverter):
     """Primary conversion class for my extracellular electrophysiology dataset."""
 
     data_interface_classes = dict(
-        Recording=SpikeGLXRecordingInterface,
-        LFP=SpikeGLXLFPInterface,
-        Sorting=PhySortingInterface,
-        Behavior=BrezovecBehaviorInterface,
+        FicTrac=FicTracInterface,
     )
