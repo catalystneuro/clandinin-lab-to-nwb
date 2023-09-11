@@ -1,2 +1,1 @@
-from .brezovecbehaviorinterface import FicTracInterface
 from .brezovecnwbconverter import BrezovecNWBConverter
