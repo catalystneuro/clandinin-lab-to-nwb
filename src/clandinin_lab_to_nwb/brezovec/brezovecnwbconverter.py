@@ -1,17 +1,13 @@
 """Primary NWBConverter class for this dataset."""
 from neuroconv import NWBConverter
 from neuroconv.datainterfaces import (
-    SpikeGLXRecordingInterface,
-    SpikeGLXLFPInterface,
-    PhySortingInterface,
+    FicTracDataInterface,
 )
-
-from clandinin_lab_to_nwb.brezovec import FicTracInterface
 
 
 class BrezovecNWBConverter(NWBConverter):
-    """Primary conversion class for my extracellular electrophysiology dataset."""
+    """Primary conversion class for the brezovec conversion project."""
 
     data_interface_classes = dict(
-        FicTrac=FicTracInterface,
+        FicTrac=FicTracDataInterface,
     )
