@@ -1,86 +1,82 @@
-"""Specialized extractor for reading TIFF files produced via ScanImage.
+from dateutil.parser import parse
+from brezovecimagingextractor import BrezovecMultiPlaneImagingExtractor
 
-Classes
--------
-ScanImageTiffImagingExtractor
-    Specialized extractor for reading TIFF files produced via ScanImage.
-"""
-from pathlib import Path
-from typing import Optional, Tuple
-from warnings import warn
+from roiextractors import MultiImagingExtractor
+from neuroconv.datainterfaces.ophys.baseimagingextractorinterface import BaseImagingExtractorInterface
+from neuroconv.utils import FolderPathType
+from neuroconv.utils.dict import DeepDict
 
-import numpy as np
+class BrezovecMultiPlaneImagingInterface(BaseImagingExtractorInterface):
+    """
+    Data Interface for writing the Clandinin lab imaging data to NWB file using the
+    MultiImagingExtractor to extract the frames from each BrezovecMultiPlaneImagingExtractor.
+    """
 
-from roiextractors.extraction_tools import PathType, FloatType, DtypeType, ArrayType, get_package
-from roiextractors.imagingextractor import ImagingExtractor
+    Extractor=BrezovecMultiPlaneImagingExtractor
 
-import nibabel as nib
+    def __init__(self, folder_path: FolderPathType):
 
-
-class BrezovecImagingExtractor(ImagingExtractor):
-    """Specialized extractor for reading TIFF files produced via ScanImage."""
-
-    extractor_name = "ScanImageTiffImaging"
-    is_writable = True
-    mode = "file"
-
-    def __init__(
-        self,
-        file_path: PathType,
-        sampling_frequency: FloatType,
-    ):
-        """Create a BrezovecImagingExtractor instance from a niff file produced by ScanImage.
-        .
-
-                Parameters
-                ----------
-                file_path : PathType
-                    Path to the nii file.
-                sampling_frequency : float
-                    The frequency at which the frames were sampled, in Hz.
         """
+        Initialize reading of NIfTI files.
 
-        super().__init__()
-        self.file_path = Path(file_path)
-        self._sampling_frequency = sampling_frequency
-        valid_suffixes = [".nii"]
-        file_path_suffix_is_valid = self.file_path.suffix in valid_suffixes
-        assert file_path_suffix_is_valid, f"The {file_path.suffix} should be .nii"
+        Parameters
+        ----------
+        folder_path : FolderPathType
+            The path to the folder that contains the NIfTI image files (.nii) and configuration files (.xml) from Bruker system.
+        verbose : bool, default: True
+        """
+        streams = BrezovecMultiPlaneImagingExtractor.get_streams(folder_path=folder_path)
+        self.imaging_extractor = [BrezovecMultiPlaneImagingExtractor(folder_path=str(folder_path), stream_name=stream) for stream in list(streams["channel_streams"].keys())]
+        #super().__init__(folder_path=folder_path, stream_name=)
+        #self.imaging_extractor = MultiImagingExtractor(imaging_extractors=imaging_extractors)
 
-        # For the brezovec data and reading the paper it seems that the img.shape
-        # is x, y, z,  time.
+    def get_metadata(self) -> DeepDict:
+        metadata = super().get_metadata()
 
-    def get_image_size(self) -> Tuple[int, int]:
+        xml_metadata = self.imaging_extractor.xml_metadata
+        session_start_time = parse(xml_metadata["date"])
+        metadata["NWBFile"].update(session_start_time=session_start_time)
 
-        img = nib.load(self.file_path)
-        self._num_rows = img.shape[0]  # TODO: Check, confirm rows x? or y?
-        self._num_columns = img.shape[1]
-        return (self._num_rows, self._num_columns)
+        description = f"Version {xml_metadata['version']}"
+        device_name = "BrukerFluorescenceMicroscope" #TODO doucle check in the paper
+        metadata["Ophys"]["Device"][0].update(
+            name=device_name,
+            description=description,
+        )
 
-    def get_num_frames(self) -> int:
-        img = nib.load(self.file_path)
-        self._num_frames = img.shape[-1]
-        return self._num_frames
+        imaging_plane_metadata = metadata["Ophys"]["ImagingPlane"][0]
+        imaging_plane_metadata.update(
+            device=device_name,
+            imaging_rate=self.imaging_extractor.get_sampling_frequency(),
+        )
+        two_photon_series_metadata = metadata["Ophys"]["TwoPhotonSeries"][0]
+        two_photon_series_metadata.update(
+            description="Imaging data acquired from the Bruker Two-Photon Microscope and transform to NIfTI.", #TODO doucle check in the paper
+            unit="px",
+            format=".nii",
+            scan_line_rate=1 / float(xml_metadata["scanLinePeriod"]),
+        )
 
-    def get_dtype(self) -> DtypeType:
-        img = nib.load(self.file_path)
-        return img.get_data_dtype()
+        microns_per_pixel = xml_metadata["micronsPerPixel"]
+        if microns_per_pixel:
+            image_size_in_pixels = self.imaging_extractor.get_image_size()
+            x_position_in_meters = float(microns_per_pixel[0]["XAxis"]) / 1e6
+            y_position_in_meters = float(microns_per_pixel[1]["YAxis"]) / 1e6
+            z_plane_position_in_meters = float(microns_per_pixel[2]["ZAxis"]) / 1e6
+            grid_spacing = [
+                y_position_in_meters,
+                x_position_in_meters,
+            ]
 
-    def get_sampling_frequency(self) -> float:
-        return self._sampling_frequency
+            imaging_plane_metadata.update(
+                grid_spacing=grid_spacing, description=f"The plane imaged at {z_plane_position_in_meters} meters depth."
+            )
 
-    def get_channel_names(self) -> list:
-        # What should be the channel names here?
-        self._channel_names = ["channel"]
-        return self._channel_names
+            field_of_view = [
+                y_position_in_meters * image_size_in_pixels[1],
+                x_position_in_meters * image_size_in_pixels[0],
+                z_plane_position_in_meters,
+            ]
+            two_photon_series_metadata.update(field_of_view=field_of_view)
 
-    def get_num_channels(self) -> int:
-        return len(self.get_channel_names())
-
-    def get_video(self, start_frame=None, end_frame=None) -> np.ndarray:
-        img = nib.load(self.file_path)
-        # get_fdata could be
-        # Or img.dataobj
-        # TODO: One of them is lazy, remember which, read nibabel documentation for best pratices
-
-        return img.dataobj[:, :, :, start_frame:end_frame]
+        return metadata
