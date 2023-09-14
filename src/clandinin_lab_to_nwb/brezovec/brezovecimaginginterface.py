@@ -1,10 +1,11 @@
 from dateutil.parser import parse
-from brezovecimagingextractor import BrezovecMultiPlaneImagingExtractor
+from clandinin_lab_to_nwb.brezovec.brezovecimagingextractor import BrezovecMultiPlaneImagingExtractor
 
 from roiextractors import MultiImagingExtractor
 from neuroconv.datainterfaces.ophys.baseimagingextractorinterface import BaseImagingExtractorInterface
 from neuroconv.utils import FolderPathType
 from neuroconv.utils.dict import DeepDict
+
 
 class BrezovecMultiPlaneImagingInterface(BaseImagingExtractorInterface):
     """
@@ -12,9 +13,9 @@ class BrezovecMultiPlaneImagingInterface(BaseImagingExtractorInterface):
     MultiImagingExtractor to extract the frames from each BrezovecMultiPlaneImagingExtractor.
     """
 
-    Extractor=BrezovecMultiPlaneImagingExtractor
+    Extractor = BrezovecMultiPlaneImagingExtractor
 
-    def __init__(self, folder_path: FolderPathType):
+    def __init__(self, folder_path: FolderPathType, stream_name: str, verbose: bool = True):
 
         """
         Initialize reading of NIfTI files.
@@ -23,12 +24,19 @@ class BrezovecMultiPlaneImagingInterface(BaseImagingExtractorInterface):
         ----------
         folder_path : FolderPathType
             The path to the folder that contains the NIfTI image files (.nii) and configuration files (.xml) from Bruker system.
+        stream_name: str, optional # TODO: Add this docstring.
         verbose : bool, default: True
         """
+        super().__init__(
+            folder_path=folder_path,
+            stream_name=stream_name,
+            verbose=verbose,
+        )
+
+    @classmethod
+    def get_streams(cls, folder_path) -> dict:
         streams = BrezovecMultiPlaneImagingExtractor.get_streams(folder_path=folder_path)
-        self.imaging_extractor = [BrezovecMultiPlaneImagingExtractor(folder_path=str(folder_path), stream_name=stream) for stream in list(streams["channel_streams"].keys())]
-        #super().__init__(folder_path=folder_path, stream_name=)
-        #self.imaging_extractor = MultiImagingExtractor(imaging_extractors=imaging_extractors)
+        return streams
 
     def get_metadata(self) -> DeepDict:
         metadata = super().get_metadata()
@@ -38,7 +46,7 @@ class BrezovecMultiPlaneImagingInterface(BaseImagingExtractorInterface):
         metadata["NWBFile"].update(session_start_time=session_start_time)
 
         description = f"Version {xml_metadata['version']}"
-        device_name = "BrukerFluorescenceMicroscope" #TODO doucle check in the paper
+        device_name = "BrukerFluorescenceMicroscope"  # TODO doucle check in the paper
         metadata["Ophys"]["Device"][0].update(
             name=device_name,
             description=description,
@@ -51,7 +59,7 @@ class BrezovecMultiPlaneImagingInterface(BaseImagingExtractorInterface):
         )
         two_photon_series_metadata = metadata["Ophys"]["TwoPhotonSeries"][0]
         two_photon_series_metadata.update(
-            description="Imaging data acquired from the Bruker Two-Photon Microscope and transform to NIfTI.", #TODO doucle check in the paper
+            description="Imaging data acquired from the Bruker Two-Photon Microscope and transform to NIfTI.",  # TODO doucle check in the paper
             unit="px",
             format=".nii",
             scan_line_rate=1 / float(xml_metadata["scanLinePeriod"]),
