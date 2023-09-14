@@ -55,8 +55,6 @@ class BrezovecMultiPlaneImagingExtractor(MultiImagingExtractor):
 
     @classmethod
     def get_streams(cls, folder_path: PathType) -> dict:
-        natsort = get_package(package_name="natsort", installation_instructions="pip install natsort")
-
         xml_root = _parse_xml(folder_path=folder_path)
         stream_name = [file.attrib for file in xml_root.findall(".//File")]
         streams = dict()
@@ -95,12 +93,24 @@ class BrezovecMultiPlaneImagingExtractor(MultiImagingExtractor):
 
                 
             self.folder_path = Path(folder_path)
+
             self._xml_root = _parse_xml(folder_path=folder_path)
 
+            # TODO: All the checks on the channel_names, streams 
+            self.stream_name = stream_name
+            streams = self.get_streams(folder_path=folder_path)
+            self._channel_names = list(streams["channel_streams"].keys())
+            assert stream_name in self._channel_names, (
+                f"The selected stream '{stream_name}' is not in the available channel stream '{self._channel_names}'!"
+            )
 
-            file_names =list(folder_path.glob("*.nii")) # can't extract the names from xml --> they are listed as .ome.tif 
-            file_names_for_stream = [file.as_posix() for file in file_names if stream_name in file.as_posix()]
-            self._nii = self._niftifile.load(file_names_for_stream[0])
+            file_names =list(folder_path.glob("*.nii")) 
+            # can't extract the names from xml --> they are listed as .ome.tif 
+            #TODO: to be implemented in a way that is not dependent to the filename
+
+            channel_id = streams["channel_streams"][stream_name]
+            file_for_stream = [file.as_posix() for file in file_names if 'channel_'+channel_id in file.as_posix()]
+            self._nii = self._niftifile.load(file_for_stream[0])
 
             self._num_rows = self._nii.shape[0]  
             self._num_columns = self._nii.shape[1]
@@ -112,13 +122,8 @@ class BrezovecMultiPlaneImagingExtractor(MultiImagingExtractor):
             assert sampling_frequency is not None, "Could not determine the frame rate from the XML file."
             self._sampling_frequency = sampling_frequency
 
-            # TODO: All the part on the channel_names, streams 
-            streams = self.get_streams(folder_path=folder_path)
-            self.stream_name = stream_name
-            #TODO: to be implemented in a way that is not dependent to the filename
-            assert any(stream_name in filename.as_posix() for filename in nii_file_paths), f"The selected channel name '{stream_name}' is not in the available .nii files '{[filename.as_posix() for filename in nii_file_paths]}'!"
 
-            self._channel_names = list(streams["channel_streams"].keys())
+            self.xml_metadata = self._get_xml_metadata()
 
 
     def get_image_size(self) -> Tuple[int, int, int]:
@@ -165,6 +170,42 @@ class BrezovecMultiPlaneImagingExtractor(MultiImagingExtractor):
         start_frame = start_frame or 0
         
         return self.nii.dataobj[:, :, :, start_frame:end_frame]
+
+    def _get_xml_metadata(self) -> Dict[str, Union[str, List[Dict[str, str]]]]:
+        """
+        Parses the metadata in the root element that are under "PVStateValue" tag into
+        a dictionary.
+        """
+        xml_metadata = dict()
+        xml_metadata.update(**self._xml_root.attrib)
+        for child in self._xml_root.findall(".//PVStateValue"):
+            metadata_root_key = child.attrib["key"]
+            if "value" in child.attrib:
+                if metadata_root_key in xml_metadata:
+                    continue
+                xml_metadata[metadata_root_key] = child.attrib["value"]
+            else:
+                xml_metadata[metadata_root_key] = []
+                for indexed_value in child:
+                    if "description" in indexed_value.attrib:
+                        xml_metadata[child.attrib["key"]].append(
+                            {indexed_value.attrib["description"]: indexed_value.attrib["value"]}
+                        )
+                    elif "value" in indexed_value.attrib:
+                        xml_metadata[child.attrib["key"]].append(
+                            {indexed_value.attrib["index"]: indexed_value.attrib["value"]}
+                        )
+                    else:
+                        for subindexed_value in indexed_value:
+                            if "description" in subindexed_value.attrib:
+                                xml_metadata[metadata_root_key].append(
+                                    {subindexed_value.attrib["description"]: subindexed_value.attrib["value"]}
+                                )
+                            else:
+                                xml_metadata[child.attrib["key"]].append(
+                                    {indexed_value.attrib["index"]: subindexed_value.attrib["value"]}
+                                )
+        return xml_metadata
 # 
 # TODO: different get_stream in the 3d and 2d case
 # TODO: SinglePlaneExtractor
