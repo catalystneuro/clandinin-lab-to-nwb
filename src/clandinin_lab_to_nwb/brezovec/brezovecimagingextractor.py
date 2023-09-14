@@ -175,8 +175,9 @@ class BrezovecMultiPlaneImagingExtractor(ImagingExtractor):
 
         end_frame = end_frame or self.get_num_frames()
         start_frame = start_frame or 0
-
-        return self.nibabel_image.dataobj[:, :, :, start_frame:end_frame]
+        self.video = self.nibabel_image.dataobj[:, :, :, start_frame:end_frame]
+        self.video = np.transpose(self.video, axes=[3,0,1,2]) # time should be always first dimension
+        return self.video
 
     def _get_xml_metadata(self) -> Dict[str, Union[str, List[Dict[str, str]]]]:
         """
