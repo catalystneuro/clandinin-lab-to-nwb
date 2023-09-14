@@ -30,8 +30,7 @@ def session_to_nwb(data_dir_path: Union[str, Path], output_dir_path: Union[str, 
 
     # Add datetime to conversion
     metadata = converter.get_metadata()
-    datetime.datetime(year=2020, month=1, day=1, tzinfo=ZoneInfo("US/Eastern"))
-    date = datetime.datetime.today()  # TO-DO: Get this from author
+    date = datetime.datetime(year=2020, month=1, day=1, tzinfo=ZoneInfo("US/Eastern"))
     metadata["NWBFile"]["session_start_time"] = date
 
     # Update default metadata with the editable in the corresponding yaml file
