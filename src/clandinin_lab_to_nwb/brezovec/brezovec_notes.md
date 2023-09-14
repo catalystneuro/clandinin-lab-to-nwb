@@ -174,8 +174,10 @@ Element: File, Path: PVScan/Sequence/Frame/File, Attributes: {'channel': '1', 'c
 Element: File, Path: PVScan/Sequence/Frame/File, Attributes: {'channel': '2', 'channelName': 'Green', 'filename': 'TSeries-02282020-0943-001_Cycle00001_Ch2_000002.ome.tif'}, Text: None
 Element: File, Path: PVScan/Sequence/Frame/File, Attributes: {'channel': '1', 'channelName': 'Red', 'filename': 'TSeries-02282020-0943-001_Cycle00001_Ch1_000003.ome.tif'}, Text: None
 --------------------
-
 ```
+But you cannot use the `filename` to identify the .nii file and extract data from that.
+
+
 
 Questions for Szonja:
 * What is a cycle? The sequence tags in the XML file look like this. Here some samples:
@@ -195,8 +197,33 @@ Element: Sequence, Path: PVScan/Sequence, Attributes: {'type': 'TSeries ZSeries 
 
 --------------------
 ```
+
+Each cycle (a `Sequence` element) is an acquisition of the volumetric image in both channels. Indeed, there are 3384 cycles  
+In each cycle there are frames (planes) for each channel. The value of `"ZAxis"` subindex 1 increases by 5 units (μm I guess) each `Frame` of a cycle .
+```python
+------------------
+<Frame relativeTime="0.104654892" absoluteTime="35.984654892001" index="1" parameterSet="CurrentSettings">
+    ...
+    <SubindexedValues index="ZAxis">
+        <SubindexedValue subindex="0" value="146.25" description="Z Focus" />
+        <SubindexedValue subindex="1" value="100" description="Bruker 400 μm Piezo" />
+    ...
+</Frame>
+<Frame relativeTime="0.113376133" absoluteTime="35.993376133001" index="2" parameterSet="CurrentSettings">
+    ...
+    <SubindexedValues index="ZAxis">
+        <SubindexedValue subindex="0" value="146.25" description="Z Focus" />
+        <SubindexedValue subindex="1" value="105" description="Bruker 400 μm Piezo" /> 
+    ...
+</Frame>
+------------------ 
+``` 
+
+
+
+
 * The unique tags in the XML file are: `{'PVStateShard', 'File', 'ExtraParameters', 'SystemID', 'Sequence', 'VoltageOutput', 'IndexedValue', 'SystemIDs', 'SubindexedValue', 'SubindexedValues', 'PVScan', 'Frame', 'PVStateValue'}`. I wonder if they are described somewhere.
-*
+Maybe from Bruker documentation?
 
 # Notes about FicTrac
 
