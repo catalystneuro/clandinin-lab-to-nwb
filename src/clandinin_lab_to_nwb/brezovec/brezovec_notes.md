@@ -34,13 +34,14 @@ This is the one that was used in the experiment according to personal communicat
 [Old file organization](https://github.com/ClandininLab/brainsss2/blob/main/file_organization.md)
 
 ##  Pending questions
-* What about the rest of the subjects / sessions?
-* What about the video files?
-* What about the fictrac header?
-* Why are the bruker files not in tiff format? In fact
+* What about the rest of the subjects / sessions? We don't have them, they provide another two in the last conversion.
+* What about the video files? They are provided. Both the original and debugging.
+* What about the fictrac header? They might provided. After investigation this is not as critical as it does not contain a lot of metadata but we built in the
+machinery to read it in the data interface in neuroconv anyway.
+* Why are the bruker files not in tiff format?
 * What are the json files in the imports directory?
-* Are the nifti files pre-processed in some way (are we getting the motion corrected ones?) or are they raw?
-* Confirm that the ANT algorithm is only applied at the population level and not at the session one.
+* Are the nifti files pre-processed in some way (are we getting the motion corrected ones?) or are they raw? They are raw.
+* Confirm that the ANT algorithm is only applied at the population level and not at the session one. Yes, this is the most likely scenario so far.
 
 ## General notes
 
@@ -52,6 +53,9 @@ Overview of pipeline. After dissection of the posterior head cuticle, the fly is
 walks on an air-suspended ball in the dark. GCaMP6f is expressed pan-neuronally, as is a
 structural marker, tdTomato. Volumes were acquired at 1.8 Hz at a resolution of 2.6 x 2.6 x 5um
 for 30 minutes to capture neural activity; a subsequent anatomical scan was taken at higher
+
+615 um = 1024 * 0.6 um  (so you can infer from this how the images that we get are oriented).
+
 
 
 Device:
@@ -94,7 +98,6 @@ Advanced Normalization Tools, ANTs
 Here a tutorial:
 https://andysbrainbook.readthedocs.io/en/latest/ANTs/ANTs_Overview.html
 
-This makes me think that the files .nii are pre-processed and that the post-processed file (after the drfit correction) are also ni files. In the data folder there is this division between anat and func which maybe is this?
 
 Importantly, we have two channels, and here is general information about what the channels mean:
 
@@ -198,7 +201,7 @@ Element: Sequence, Path: PVScan/Sequence, Attributes: {'type': 'TSeries ZSeries 
 --------------------
 ```
 
-Each cycle (a `Sequence` element) is an acquisition of the volumetric image in both channels. Indeed, there are 3384 cycles  
+Each cycle (a `Sequence` element) is an acquisition of the volumetric image in both channels. Indeed, there are 3384 cycles
 In each cycle there are frames (planes) for each channel. The value of `"ZAxis"` subindex 1 increases by 5 units (μm I guess) each `Frame` of a cycle .
 ```python
 ------------------
@@ -213,11 +216,11 @@ In each cycle there are frames (planes) for each channel. The value of `"ZAxis"`
     ...
     <SubindexedValues index="ZAxis">
         <SubindexedValue subindex="0" value="146.25" description="Z Focus" />
-        <SubindexedValue subindex="1" value="105" description="Bruker 400 μm Piezo" /> 
+        <SubindexedValue subindex="1" value="105" description="Bruker 400 μm Piezo" />
     ...
 </Frame>
------------------- 
-``` 
+------------------
+```
 
 
 
