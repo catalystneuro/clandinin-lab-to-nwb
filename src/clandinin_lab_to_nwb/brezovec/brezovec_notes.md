@@ -201,7 +201,7 @@ In the frame element (identify a plane acquisition → acquisition of the single
 	<Frame relativeTime="0.104654892" absoluteTime="35.984654892001" index="1" → first plane
 	<Frame relativeTime="0.113376133" absoluteTime="35.993376133001" index="2" → second plane
 	…
-<Sequence type="TSeries ZSeries Element" cycle="2" 			
+<Sequence type="TSeries ZSeries Element" cycle="2"
 	<Frame relativeTime="0.636650593" absoluteTime="36.516650593001" index="1" → first plane
 ------------------
 ```
