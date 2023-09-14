@@ -73,6 +73,7 @@ Functional vs anatomical, this are the dimensions of the files when I open them 
 
 Measure of functional:
 (256, 128, 49, 3384)
+for the dimenasional convention of nifti file: [NIfTI doc](https://docs.safe.com/fme/html/FME-Form-Documentation/FME-ReadersWriters/nifti/nifti.htm#)
 Measure of anatomical:
 (1024, 512, 241, 100)
 
@@ -167,6 +168,7 @@ There is also dicom format which has way more structure and is not only for neur
 
 ### Information extracted from XML in the Bruker format
 
+#### Channel names
 We have the name of the channels in the tag File of the XML. Here some samples
 ```python
 --------------------
@@ -179,6 +181,32 @@ Element: File, Path: PVScan/Sequence/Frame/File, Attributes: {'channel': '1', 'c
 --------------------
 ```
 But you cannot use the `filename` to identify the .nii file and extract data from that.
+
+#### Time information
+In the sequence element (identify a cycle → acquisition of all 3d image):
+example:
+```python
+------------------
+  	<Sequence type="TSeries ZSeries Element" cycle="1" time="12:20:53.6844573"
+	<Sequence type="TSeries ZSeries Element" cycle="2" time="12:51:30.4521509"
+	<Sequence type="TSeries ZSeries Element" cycle="3" time="12:51:30.4621509"
+------------------
+```
+this time info probably relate to the time the files for each “stream” (plane acquisition of a single channel) is created. Bruker datasheet should be checked to confirm that in the first cycle the time the file is created coincides with the time the session starts. While for the other cycles, the file are generated once the entire acquisition (all cycles) is done. Indeed we can notice a time difference from the first cycle to the second cycle that is equivalent to the duration of the session (31 min = cycles: 3384 * sampling_frequency: 1.8737).
+In the frame element (identify a plane acquisition → acquisition of the single 2d image inside a cycle):
+	example:
+```python
+------------------
+<Sequence type="TSeries ZSeries Element" cycle="1"
+	<Frame relativeTime="0.104654892" absoluteTime="35.984654892001" index="1" → first plane
+	<Frame relativeTime="0.113376133" absoluteTime="35.993376133001" index="2" → second plane
+	…
+<Sequence type="TSeries ZSeries Element" cycle="2" 			
+	<Frame relativeTime="0.636650593" absoluteTime="36.516650593001" index="1" → first plane
+------------------
+```
+Here there are `relativeTime` and `absoluteTime` that indicate the time that a plane is acquired. The difference between to consecutive `absoluteTime` is the same value as the difference between to consecutive `relativeTime`. From Bruker datasheet we need to check which is the time offset for the two different timestamps.
+However we can use both relativeTime or absolute time to compute the `sampling_frequency`, intended as the frequency at which a 3d image is acquired (1.87 Hz here) and also the `plane_acquisition_rate`, intended as the rate at which each plane is acquired in a cycle (114 Hz circa here)
 
 
 
@@ -221,9 +249,6 @@ In each cycle there are frames (planes) for each channel. The value of `"ZAxis"`
 </Frame>
 ------------------
 ```
-
-
-
 
 * The unique tags in the XML file are: `{'PVStateShard', 'File', 'ExtraParameters', 'SystemID', 'Sequence', 'VoltageOutput', 'IndexedValue', 'SystemIDs', 'SubindexedValue', 'SubindexedValues', 'PVScan', 'Frame', 'PVStateValue'}`. I wonder if they are described somewhere.
 Maybe from Bruker documentation?
