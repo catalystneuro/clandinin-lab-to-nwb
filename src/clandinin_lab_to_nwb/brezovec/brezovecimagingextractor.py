@@ -123,8 +123,8 @@ class BrezovecMultiPlaneImagingExtractor(ImagingExtractor):
         file_for_stream = [file.as_posix() for file in file_names if "channel_" + channel_id in file.as_posix()]
         self.nibabel_image = self._niftifile.load(file_for_stream[0])
 
-        self._num_rows = self.nibabel_image.shape[0]
-        self._num_columns = self.nibabel_image.shape[1]
+        self._num_rows = self.nibabel_image.shape[1]
+        self._num_columns = self.nibabel_image.shape[0]
         self._num_planes_per_channel_stream = self.nibabel_image.shape[2]
 
         self._num_frames = self.nibabel_image.shape[-1]
