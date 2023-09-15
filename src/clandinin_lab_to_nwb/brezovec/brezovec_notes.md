@@ -48,11 +48,11 @@ machinery to read it in the data interface in neuroconv anyway.
 This describes all the data available in the paper.
 ![Figure 1a](./images/figure_1a.png)
 
-
-Overview of pipeline. After dissection of the posterior head cuticle, the fly is mounted under a two-photon microscope and
+Figure caption
+>  Overview of pipeline. After dissection of the posterior head cuticle, the fly is mounted under a two-photon microscope and
 walks on an air-suspended ball in the dark. GCaMP6f is expressed pan-neuronally, as is a
-structural marker, tdTomato. Volumes were acquired at 1.8 Hz at a resolution of 2.6 x 2.6 x 5um
-for 30 minutes to capture neural activity; a subsequent anatomical scan was taken at higher
+structural marker, tdTomato. Volumes were acquired at 1.8 Hz at a resolution of 2.6 x 2.6 x 5um for 30 minutes to capture neural activity; a subsequent anatomical scan was taken at higher spatial resolution (0.6um x 0.6um x 1um). The structural marker was used to correct brain motion. All nine datasets were registered into a single mean brain using the structural marker; these warp parameters were then applied to the functional neural data to bring all flies into the same space.
+
 
 615 um = 1024 * 0.6 um  (so you can infer from this how the images that we get are oriented).
 
@@ -73,11 +73,28 @@ Functional vs anatomical, this are the dimensions of the files when I open them 
 
 Measure of functional:
 (256, 128, 49, 3384)
-for the dimenasional convention of nifti file: [NIfTI doc](https://docs.safe.com/fme/html/FME-Form-Documentation/FME-ReadersWriters/nifti/nifti.htm#)
+
 Measure of anatomical:
 (1024, 512, 241, 100)
 
-Note that there are two channels of them, they are the same size. It is still not clear to me what each channel is as the methods report only an emission lambda but talking with Szonja she mentioned that each channel should have a different lambda.
+for the dimenasional convention of nifti file: [NIfTI doc](https://docs.safe.com/fme/html/FME-Form-Documentation/FME-ReadersWriters/nifti/nifti.htm#). Quote:
+
+> The convention for the axis names is x,y,z, and t, as the 4th dimension is usually used to locate multiple volumes in time.
+
+This together with plotting one of their frames of the anatomical data revelas that their orientation is columns, rows, slices, time.
+
+```python
+single_image = np.mean(img.dataobj[:, :, 20, :], axis=2)
+print(single_image.shape)
+import matplotlib.pyplot as plt
+
+plt.imshow(single_image)
+```
+
+![Alt text](images/shape_plotted.png)
+
+
+
 
 Anyway, for the structure at least, this matches with the paper:
 > Volumes were acquired at 1.8 Hz at a resolution of 2.6 x 2.6 x 5um
@@ -128,6 +145,7 @@ imports
 
 [Link](https://github.com/ClandininLab/brainsss2/blob/5ec2ddad6793d6115c1ee80302d5cdf8019fe995/file_organization.md?plain=1#L21-L22C88)
 
+It seems that they are using this convention and therefore we know how to label the channels. They should have a different lambda. How to find it?
 
 
 ### Frequency on fictrac

@@ -48,6 +48,13 @@ def _parse_xml(folder_path: PathType) -> ElementTree.Element:
     return tree.getroot()
 
 
+def _get_xml_file_path(folder_path: PathType) -> Path:
+    folder_path = Path(folder_path)
+    xml_file_path = folder_path / f"{folder_path.name}.xml"
+    assert xml_file_path.is_file(), f"The XML configuration file is not found at '{folder_path}'."
+    return xml_file_path
+
+
 class BrezovecMultiPlaneImagingExtractor(ImagingExtractor):
     """Specialized extractor Brezovec conversion project: reading NIfTI files produced by Bruker system."""
 
@@ -57,13 +64,17 @@ class BrezovecMultiPlaneImagingExtractor(ImagingExtractor):
 
     @classmethod
     def get_streams(cls, folder_path: PathType) -> dict:
-        xml_root = _parse_xml(folder_path=folder_path)
-        stream_name = [file.attrib for file in xml_root.findall(".//File")]
-        streams = dict()
-        streams["channel_streams"] = dict()
-        for i in stream_name:
-            streams["channel_streams"][i["channelName"]] = i["channel"]
-            # I saved the channel id to retreive the stream name matching the .nii filename
+        streams = {"channel_streams": {}}
+
+        for event, elem in ElementTree.iterparse(_get_xml_file_path(folder_path), events=("end",)):
+            if elem.tag == "File":
+                stream_name = elem.attrib
+                channel_name = stream_name["channelName"]
+                channel = stream_name["channel"]
+                streams["channel_streams"][channel_name] = channel
+                # Clear the element to free memory
+                elem.clear()
+
         return streams
 
     def __init__(
@@ -170,13 +181,19 @@ class BrezovecMultiPlaneImagingExtractor(ImagingExtractor):
     def get_video(
         self, start_frame: Optional[int] = None, end_frame: Optional[int] = None, channel: int = 0
     ) -> np.ndarray:
+        """
+        The nifti format is:
+        (x - columns - width, y - rows - heigth, z, t)
+        which we transform to the roiextractors convention:
+        (t, y - rows, x - columns, z)
+        """
         if start_frame is not None and end_frame is not None and start_frame == end_frame:
             return self.nibabel_image.dataobj[:, :, :, start_frame]
 
         end_frame = end_frame or self.get_num_frames()
         start_frame = start_frame or 0
 
-        return self.nibabel_image.dataobj[:, :, :, start_frame:end_frame].transpose(3, 0, 1, 2)
+        return self.nibabel_image.dataobj[:, :, :, start_frame:end_frame].transpose(3, 1, 0, 2)
 
     def _get_xml_metadata(self) -> Dict[str, Union[str, List[Dict[str, str]]]]:
         """
