@@ -208,7 +208,7 @@ class BrezovecMultiPlaneImagingExtractor(ImagingExtractor):
         (t, y - rows, x - columns, z)
         """
         if start_frame is not None and end_frame is not None and start_frame == end_frame:
-            return self.nibabel_image.dataobj[:, :, :, start_frame]
+            return self.nibabel_image.dataobj[:, :, :, start_frame].transpose(3, 1, 0, 2)
 
         end_frame = end_frame or self.get_num_frames()
         start_frame = start_frame or 0
