@@ -1,23 +1,18 @@
-"""Specialized extractor for reading TIFF files produced via ScanImage.
+"""Specialized extractor for reading NIfTI files produced via Bruker System.
 
 Classes
 -------
 ScanImageTiffImagingExtractor
-    Specialized extractor for reading TIFF files produced via ScanImage.
+    Specialized extractor for reading NIfTI files produced via Bruker System.
 """
-import logging
-import re
-from collections import Counter
-from itertools import islice
 from pathlib import Path
 from types import ModuleType
 from typing import Optional, Tuple, Union, List, Dict
 from xml.etree import ElementTree
 
 import numpy as np
-from roiextractors.multiimagingextractor import MultiImagingExtractor
 from roiextractors.imagingextractor import ImagingExtractor
-from roiextractors.extraction_tools import PathType, get_package, DtypeType, ArrayType, FloatType
+from roiextractors.extraction_tools import PathType, get_package, DtypeType
 from neuroconv.utils import calculate_regular_series_rate
 
 
@@ -113,9 +108,9 @@ class BrezovecMultiPlaneImagingExtractor(ImagingExtractor):
         Parameters
         ----------
         folder_path : PathType
-            The path to the folder that contains the NIfTI image files (.ome.tif) and configuration files (.xml, .env).
+            The path to the folder that contains the NIfTI image files (.nii) and configuration files (.xml).
         stream_name: str, optional
-            The name of the recording channel (e.g. "Ch2").
+            The name of the recording channel.
         """
         self._niftifile = _get_nifti_reader()
 

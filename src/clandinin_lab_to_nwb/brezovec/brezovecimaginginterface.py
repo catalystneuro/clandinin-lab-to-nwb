@@ -9,8 +9,7 @@ from neuroconv.utils.dict import DeepDict
 
 class BrezovecMultiPlaneImagingInterface(BaseImagingExtractorInterface):
     """
-    Data Interface for writing the Clandinin lab imaging data to NWB file using the
-    MultiImagingExtractor to extract the frames from each BrezovecMultiPlaneImagingExtractor.
+    Data Interface for writing the Clandinin lab imaging data to NWB file using BrezovecMultiPlaneImagingExtractor.
     """
 
     Extractor = BrezovecMultiPlaneImagingExtractor
@@ -24,7 +23,8 @@ class BrezovecMultiPlaneImagingInterface(BaseImagingExtractorInterface):
         ----------
         folder_path : FolderPathType
             The path to the folder that contains the NIfTI image files (.nii) and configuration files (.xml) from Bruker system.
-        stream_name: str, optional # TODO: Add this docstring.
+        stream_name: str, optional
+            The name of the recording channel.
         verbose : bool, default: True
         """
         super().__init__(
