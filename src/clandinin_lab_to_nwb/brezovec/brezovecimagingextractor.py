@@ -25,6 +25,36 @@ def _get_nifti_reader() -> ModuleType:
     return get_package(package_name="nibabel", installation_instructions="pip install nibabel")
 
 
+def get_channels_from_first_frame(xml_file):
+    """
+    Extract channel and channelName attributes from the File tags within the first Frame tag.
+
+    Parameters
+    ----------
+    xml_file : str or Path
+        Path to the XML file.
+
+    Returns
+    -------
+    list of tuple
+        A list containing tuples. Each tuple consists of (channel, channelName) attributes.
+    """
+
+    file_attributes_list = []
+    for event, elem in ElementTree.iterparse(xml_file, events=("start", "end")):
+
+        # We only need one frame so get out out of the loop when the first Frame tag is closed
+        if elem.tag == "Frame" and event == "end":
+            break
+
+        # For every file we extract the channel and channelName attributes and then clear the element
+        if elem.tag == "File" and event == "end":
+            file_attributes_list.append((elem.attrib.get("channel"), elem.attrib.get("channelName")))
+            elem.clear()
+
+    return file_attributes_list
+
+
 def _determine_imaging_is_volumetric(folder_path: PathType) -> bool:
     """
     Determines whether imaging is volumetric based on 'zDevice' configuration value.
@@ -64,16 +94,11 @@ class BrezovecMultiPlaneImagingExtractor(ImagingExtractor):
 
     @classmethod
     def get_streams(cls, folder_path: PathType) -> dict:
-        streams = {"channel_streams": {}}
 
-        for event, elem in ElementTree.iterparse(_get_xml_file_path(folder_path), events=("end",)):
-            if elem.tag == "File":
-                stream_name = elem.attrib
-                channel_name = stream_name["channelName"]
-                channel = stream_name["channel"]
-                streams["channel_streams"][channel_name] = channel
-                # Clear the element to free memory
-                elem.clear()
+        xml_file_path = _get_xml_file_path(folder_path)
+        channel_info = get_channels_from_first_frame(xml_file_path)
+        channel_info_formated = {f"{channel_name}": f"{channel}" for channel, channel_name in channel_info}
+        streams = {"channel_streams": channel_info_formated}
 
         return streams
 
