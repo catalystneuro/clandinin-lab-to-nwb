@@ -85,9 +85,8 @@ class BrezovecMultiPlaneImagingExtractor(ImagingExtractor):
 
         return streams
 
-
     @classmethod
-    def _determine_imaging_is_volumetric(cls, xml_root:ElementTree.Element) -> bool:
+    def _determine_imaging_is_volumetric(cls, xml_root: ElementTree.Element) -> bool:
         """
         Determines whether imaging is volumetric based on 'zDevice' configuration value.
         The value is expected to be '1' for volumetric and '0' for single plane images.
@@ -96,7 +95,6 @@ class BrezovecMultiPlaneImagingExtractor(ImagingExtractor):
         is_volumetric = bool(int(z_device_element.attrib["value"]))
 
         return is_volumetric
-
 
     def __init__(
         self,
@@ -127,7 +125,6 @@ class BrezovecMultiPlaneImagingExtractor(ImagingExtractor):
             f"{self.extractor_name}Extractor is for volumetric imaging. "
             "For single imaging plane data use BrezovecSinglePlaneImagingExtractor."
         )
-
 
         # TODO: All the checks on the channel_names, streams
         self.stream_name = stream_name

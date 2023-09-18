@@ -154,7 +154,7 @@ From [Bruker Control documentation](https://bruker-control.readthedocs.io/en/lat
 More specifically
 >The Voltage Recording’s .xml is written in XML v1.0 and primarily tracks the names of each channel recorded on the DAQ and the time that the recording was actually started. This is used when aligning the timestamps of the imaging frames as well as the during the ripping process.
 
-I cannot find any VoltageOutput.csv file in the sessions that we have. Do they have this data? How they synch the behavioural  
+I cannot find any VoltageOutput.csv file in the sessions that we have. Do they have this data? How they synch the behavioural
 ### Frequency on fictrac
 
 The paper says:
