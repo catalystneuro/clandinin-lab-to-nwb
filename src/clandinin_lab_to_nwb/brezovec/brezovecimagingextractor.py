@@ -50,18 +50,6 @@ def get_channels_from_first_frame(xml_file):
     return file_attributes_list
 
 
-def _determine_imaging_is_volumetric(folder_path: PathType) -> bool:
-    """
-    Determines whether imaging is volumetric based on 'zDevice' configuration value.
-    The value is expected to be '1' for volumetric and '0' for single plane images.
-    """
-    xml_root = _parse_xml(folder_path=folder_path)
-    z_device_element = xml_root.find(".//PVStateValue[@key='zDevice']")
-    is_volumetric = bool(int(z_device_element.attrib["value"]))
-
-    return is_volumetric
-
-
 def _parse_xml(folder_path: PathType) -> ElementTree.Element:
     """
     Parses the XML configuration file into element tree and returns the root Element.
@@ -97,6 +85,19 @@ class BrezovecMultiPlaneImagingExtractor(ImagingExtractor):
 
         return streams
 
+
+    @classmethod
+    def _determine_imaging_is_volumetric(cls, xml_root:ElementTree.Element) -> bool:
+        """
+        Determines whether imaging is volumetric based on 'zDevice' configuration value.
+        The value is expected to be '1' for volumetric and '0' for single plane images.
+        """
+        z_device_element = xml_root.find(".//PVStateValue[@key='zDevice']")
+        is_volumetric = bool(int(z_device_element.attrib["value"]))
+
+        return is_volumetric
+
+
     def __init__(
         self,
         folder_path: PathType,
@@ -118,14 +119,15 @@ class BrezovecMultiPlaneImagingExtractor(ImagingExtractor):
         nii_file_paths = list(folder_path.glob("*.nii"))
         assert nii_file_paths, f"The NIfTI image files are missing from '{folder_path}'."
 
-        assert _determine_imaging_is_volumetric(folder_path=folder_path), (
+        self.folder_path = Path(folder_path)
+
+        self._xml_root = _parse_xml(folder_path=folder_path)
+
+        assert self._determine_imaging_is_volumetric(self._xml_root), (
             f"{self.extractor_name}Extractor is for volumetric imaging. "
             "For single imaging plane data use BrezovecSinglePlaneImagingExtractor."
         )
 
-        self.folder_path = Path(folder_path)
-
-        self._xml_root = _parse_xml(folder_path=folder_path)
 
         # TODO: All the checks on the channel_names, streams
         self.stream_name = stream_name
@@ -250,8 +252,3 @@ class BrezovecMultiPlaneImagingExtractor(ImagingExtractor):
                                     {indexed_value.attrib["index"]: subindexed_value.attrib["value"]}
                                 )
         return xml_metadata
-
-
-#
-# TODO: different get_stream in the 3d and 2d case
-# TODO: SinglePlaneExtractor
