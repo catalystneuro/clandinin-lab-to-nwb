@@ -37,7 +37,6 @@ def get_channels_from_first_frame(xml_file):
 
     file_attributes_list = []
     for event, elem in ElementTree.iterparse(xml_file, events=("start", "end")):
-
         # We only need one frame so get out out of the loop when the first Frame tag is closed
         if elem.tag == "Frame" and event == "end":
             break
@@ -77,7 +76,6 @@ class BrezovecMultiPlaneImagingExtractor(ImagingExtractor):
 
     @classmethod
     def get_streams(cls, folder_path: PathType) -> dict:
-
         xml_file_path = _get_xml_file_path(folder_path)
         channel_info = get_channels_from_first_frame(xml_file_path)
         channel_info_formated = {f"{channel_name}": f"{channel}" for channel, channel_name in channel_info}
@@ -85,9 +83,8 @@ class BrezovecMultiPlaneImagingExtractor(ImagingExtractor):
 
         return streams
 
-
     @classmethod
-    def _determine_imaging_is_volumetric(cls, xml_root:ElementTree.Element) -> bool:
+    def _determine_imaging_is_volumetric(cls, xml_root: ElementTree.Element) -> bool:
         """
         Determines whether imaging is volumetric based on 'zDevice' configuration value.
         The value is expected to be '1' for volumetric and '0' for single plane images.
@@ -96,7 +93,6 @@ class BrezovecMultiPlaneImagingExtractor(ImagingExtractor):
         is_volumetric = bool(int(z_device_element.attrib["value"]))
 
         return is_volumetric
-
 
     def __init__(
         self,
@@ -127,7 +123,6 @@ class BrezovecMultiPlaneImagingExtractor(ImagingExtractor):
             f"{self.extractor_name}Extractor is for volumetric imaging. "
             "For single imaging plane data use BrezovecSinglePlaneImagingExtractor."
         )
-
 
         # TODO: All the checks on the channel_names, streams
         self.stream_name = stream_name
@@ -194,11 +189,13 @@ class BrezovecMultiPlaneImagingExtractor(ImagingExtractor):
         timestamps = [absolute_times[t] for t in np.arange(0, len(absolute_times), self._num_planes_per_channel_stream)]
         return np.array(timestamps)
 
+    # Since we define one TwoPhotonSeries per channel, here it should return the name of the single channel
     def get_channel_names(self) -> list:
-        return self._channel_names
+        # return self._channel_names
+        return [self.stream_name]
 
     def get_num_channels(self) -> int:
-        return len(self.get_channel_names())
+        return 1  # len(self.get_channel_names())
 
     def get_video(
         self, start_frame: Optional[int] = None, end_frame: Optional[int] = None, channel: int = 0
@@ -210,7 +207,7 @@ class BrezovecMultiPlaneImagingExtractor(ImagingExtractor):
         (t, y - rows, x - columns, z)
         """
         if start_frame is not None and end_frame is not None and start_frame == end_frame:
-            return self.nibabel_image.dataobj[:, :, :, start_frame].transpose(3, 1, 0, 2)
+            return self.nibabel_image.dataobj[:, :, :, start_frame].transpose(1, 0, 2)
 
         end_frame = end_frame or self.get_num_frames()
         start_frame = start_frame or 0
