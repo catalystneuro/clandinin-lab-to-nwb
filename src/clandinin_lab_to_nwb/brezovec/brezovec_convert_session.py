@@ -29,11 +29,11 @@ def session_to_nwb(data_dir_path: Union[str, Path], output_dir_path: Union[str, 
     # Add Green Channel Functional Imaging
     folder_path = data_dir_path / "func_0" / "TSeries-06202020-0931-003"
     source_data.update(dict(OphysGreenFun=dict(folder_path=str(folder_path), stream_name="Green")))
-    conversion_options.update(dict(OphysGreenFun=dict(stub_test=True)))
+    conversion_options.update(dict(OphysGreenFun=dict(stub_test=True, photon_series_index=0)))
 
     # Add Red Channel Functional Imaging
     source_data.update(dict(OphysRedFun=dict(folder_path=str(folder_path), stream_name="Red")))
-    conversion_options.update(dict(OphysRedFun=dict(stub_test=True)))
+    conversion_options.update(dict(OphysRedFun=dict(stub_test=True, photon_series_index=1)))
 
     converter = BrezovecNWBConverter(source_data=source_data)
 
