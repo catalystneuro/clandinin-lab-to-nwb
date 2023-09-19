@@ -53,7 +53,7 @@ class BrezovecFunctionalGreenImagingInterface(BaseImagingExtractorInterface):
 
         imaging_plane_metadata = metadata["Ophys"]["ImagingPlane"][0]
         imaging_plane_metadata.update(
-            # optical_channel =                 
+            # optical_channel =
             #     dict(
             #         name=self.imaging_extractor.stream_name,
             #         emission_lambda=525, #513 FPbase
@@ -61,8 +61,8 @@ class BrezovecFunctionalGreenImagingInterface(BaseImagingExtractorInterface):
             #     ),
             device=device_name,
             imaging_rate=self.imaging_extractor.get_sampling_frequency(),
-            excitation_lambda = 920.0,
-            indicator = "GCaMP6f"
+            excitation_lambda=920.0,
+            indicator="GCaMP6f",
         )
         two_photon_series_metadata = metadata["Ophys"]["TwoPhotonSeries"][0]
         two_photon_series_metadata.update(
@@ -145,7 +145,7 @@ class BrezovecFunctionalRedImagingInterface(BaseImagingExtractorInterface):
 
         imaging_plane_metadata = metadata["Ophys"]["ImagingPlane"][0]
         imaging_plane_metadata.update(
-            # optical_channel =                 
+            # optical_channel =
             #     dict(
             #         name=self.imaging_extractor.stream_name,
             #         emission_lambda=550, #581 FPbase
@@ -153,8 +153,8 @@ class BrezovecFunctionalRedImagingInterface(BaseImagingExtractorInterface):
             #     ),
             device=device_name,
             imaging_rate=self.imaging_extractor.get_sampling_frequency(),
-            excitation_lambda = 920.0,
-            indicator = "tdTomato"
+            excitation_lambda=920.0,
+            indicator="tdTomato",
         )
         two_photon_series_metadata = metadata["Ophys"]["TwoPhotonSeries"][0]
         two_photon_series_metadata.update(
@@ -236,7 +236,7 @@ class BrezovecAnatomicalGreenImagingInterface(BaseImagingExtractorInterface):
 
         imaging_plane_metadata = metadata["Ophys"]["ImagingPlane"][0]
         imaging_plane_metadata.update(
-            # optical_channel =                 
+            # optical_channel =
             #     dict(
             #         name=self.imaging_extractor.stream_name,
             #         emission_lambda=525, #513 FPbase
@@ -244,8 +244,8 @@ class BrezovecAnatomicalGreenImagingInterface(BaseImagingExtractorInterface):
             #     ),
             device=device_name,
             imaging_rate=self.imaging_extractor.get_sampling_frequency(),
-            excitation_lambda = 920.0,
-            indicator = "GCaMP6f"
+            excitation_lambda=920.0,
+            indicator="GCaMP6f",
         )
         two_photon_series_metadata = metadata["Ophys"]["TwoPhotonSeries"][0]
         two_photon_series_metadata.update(
@@ -327,7 +327,7 @@ class BrezovecAnatomicalRedImagingInterface(BaseImagingExtractorInterface):
 
         imaging_plane_metadata = metadata["Ophys"]["ImagingPlane"][0]
         imaging_plane_metadata.update(
-            # optical_channel =                 
+            # optical_channel =
             #     dict(
             #         name=self.imaging_extractor.stream_name,
             #         emission_lambda=550, #581 FPbase
@@ -335,8 +335,8 @@ class BrezovecAnatomicalRedImagingInterface(BaseImagingExtractorInterface):
             #     ),
             device=device_name,
             imaging_rate=self.imaging_extractor.get_sampling_frequency(),
-            excitation_lambda = 920.0,
-            indicator = "tdTomato"
+            excitation_lambda=920.0,
+            indicator="tdTomato",
         )
         two_photon_series_metadata = metadata["Ophys"]["TwoPhotonSeries"][0]
         two_photon_series_metadata.update(
