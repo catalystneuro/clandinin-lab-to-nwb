@@ -3,11 +3,16 @@ from neuroconv import NWBConverter
 from neuroconv.datainterfaces import (
     FicTracDataInterface,
 )
-
+from .brezovecimaginginterface import (
+    BrezovecFunctionalGreenImagingInterface,
+    BrezovecFunctionalRedImagingInterface
+) 
 
 class BrezovecNWBConverter(NWBConverter):
     """Primary conversion class for the brezovec conversion project."""
 
     data_interface_classes = dict(
-        FicTrac=FicTracDataInterface,
+        # FicTrac=FicTracDataInterface,
+        OphysGreenFun=BrezovecFunctionalGreenImagingInterface,
+        OphysRedFun=BrezovecFunctionalRedImagingInterface 
     )

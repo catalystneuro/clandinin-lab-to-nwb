@@ -22,9 +22,16 @@ def session_to_nwb(data_dir_path: Union[str, Path], output_dir_path: Union[str, 
     source_data = dict()
     conversion_options = dict()
 
-    # Add Fictrac
-    file_path = data_dir_path / "fictrac" / "fictrac-20200228_161226.dat"
-    source_data.update(dict(FicTrac=dict(file_path=str(file_path))))
+    # # Add Fictrac
+    # file_path = data_dir_path / "fictrac" / "fictrac-20200228_161226.dat"
+    # source_data.update(dict(FicTrac=dict(file_path=str(file_path))))
+
+    # Add Green Channel Functional Imaging
+    folder_path= data_dir_path / "func_0" / "TSeries-06202020-0931-003"
+    source_data.update(dict(OphysGreenFun=dict(folder_path=str(folder_path),stream_name='Green')))    
+
+    # Add Red Channel Functional Imaging
+    source_data.update(dict(OphysRedFun=dict(folder_path=str(folder_path),stream_name='Red')))
 
     converter = BrezovecNWBConverter(source_data=source_data)
 
@@ -49,10 +56,10 @@ def session_to_nwb(data_dir_path: Union[str, Path], output_dir_path: Union[str, 
 
 if __name__ == "__main__":
     # Parameters for conversion
-    root_path = Path("/home/heberto/Clandinin-CN-data-share/")
-    data_dir_path = root_path / "brezovec_example_data"
-    output_dir_path = Path("/home/heberto/conversion_nwb/")
-    stub_test = False
+    root_path = Path("/media/amtra/Samsung_T5/CN_data/")
+    data_dir_path = root_path / "brezovec_example_data/imports/20200620/fly2"
+    output_dir_path = root_path / "conversion_nwb" 
+    stub_test = True
 
     session_to_nwb(
         data_dir_path=data_dir_path,
