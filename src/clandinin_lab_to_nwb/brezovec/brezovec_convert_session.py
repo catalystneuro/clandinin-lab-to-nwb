@@ -28,21 +28,21 @@ def session_to_nwb(data_dir_path: Union[str, Path], output_dir_path: Union[str, 
 
     # Add Green Channel Functional Imaging
     folder_path = data_dir_path / "func_0" / "TSeries-06202020-0931-003"
-    source_data.update(dict(OphysGreenFun=dict(folder_path=str(folder_path), stream_name="Green")))
-    conversion_options.update(dict(OphysGreenFun=dict(stub_test=True, stub_frames=10, photon_series_index=0)))
+    source_data.update(dict(ImagingFunctionalGreen=dict(folder_path=str(folder_path), stream_name="Green")))
+    conversion_options.update(dict(ImagingFunctionalGreen=dict(stub_test=True, stub_frames=10, photon_series_index=0)))
 
     # Add Red Channel Functional Imaging
-    source_data.update(dict(OphysRedFun=dict(folder_path=str(folder_path), stream_name="Red")))
-    conversion_options.update(dict(OphysRedFun=dict(stub_test=True, stub_frames=10, photon_series_index=1)))
+    source_data.update(dict(ImagingFunctionalRed=dict(folder_path=str(folder_path), stream_name="Red")))
+    conversion_options.update(dict(ImagingFunctionalRed=dict(stub_test=True, stub_frames=10, photon_series_index=1)))
 
     # Add Green Channel Anatomical Imaging
     folder_path = data_dir_path / "anat_0" / "TSeries-06202020-0931-004"
-    source_data.update(dict(OphysGreenAna=dict(folder_path=str(folder_path), stream_name="Green")))
-    conversion_options.update(dict(OphysGreenAna=dict(stub_test=True, stub_frames=10, photon_series_index=2)))
+    source_data.update(dict(ImagingAnatomicalGreen=dict(folder_path=str(folder_path), stream_name="Green")))
+    conversion_options.update(dict(ImagingAnatomicalGreen=dict(stub_test=True, stub_frames=10, photon_series_index=2)))
 
     # Add Red Channel Anatomical Imaging
-    source_data.update(dict(OphysRedAna=dict(folder_path=str(folder_path), stream_name="Red")))
-    conversion_options.update(dict(OphysRedAna=dict(stub_test=True, stub_frames=10, photon_series_index=3)))
+    source_data.update(dict(ImagingAnatomicalRed=dict(folder_path=str(folder_path), stream_name="Red")))
+    conversion_options.update(dict(ImagingAnatomicalRed=dict(stub_test=True, stub_frames=10, photon_series_index=3)))
 
     converter = BrezovecNWBConverter(source_data=source_data)
 

@@ -16,8 +16,8 @@ class BrezovecNWBConverter(NWBConverter):
 
     data_interface_classes = dict(
         # FicTrac=FicTracDataInterface,
-        OphysGreenFun=BrezovecFunctionalGreenImagingInterface,
-        OphysRedFun=BrezovecFunctionalRedImagingInterface,
-        OphysGreenAna=BrezovecAnatomicalGreenImagingInterface,
-        OphysRedAna=BrezovecAnatomicalRedImagingInterface,
+        ImagingFunctionalGreen=BrezovecFunctionalGreenImagingInterface,
+        ImagingFunctionalRed=BrezovecFunctionalRedImagingInterface,
+        ImagingAnatomicalGreen=BrezovecAnatomicalGreenImagingInterface,
+        ImagingAnatomicalRed=BrezovecAnatomicalRedImagingInterface,
     )

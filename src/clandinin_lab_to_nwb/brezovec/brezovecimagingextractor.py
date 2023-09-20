@@ -70,7 +70,7 @@ def _get_xml_file_path(folder_path: PathType) -> Path:
 class BrezovecMultiPlaneImagingExtractor(ImagingExtractor):
     """Specialized extractor Brezovec conversion project: reading NIfTI files produced by Bruker system."""
 
-    extractor_name = "BrezovecMultiPlanImaging"
+    extractor_name = "BrezovecMultiPlaneImaging"
     is_writable = True
     mode = "folder"
 
