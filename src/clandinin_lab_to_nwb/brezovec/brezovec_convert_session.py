@@ -29,11 +29,20 @@ def session_to_nwb(data_dir_path: Union[str, Path], output_dir_path: Union[str, 
     # Add Green Channel Functional Imaging
     folder_path = data_dir_path / "func_0" / "TSeries-06202020-0931-003"
     source_data.update(dict(OphysGreenFun=dict(folder_path=str(folder_path), stream_name="Green")))
-    conversion_options.update(dict(OphysGreenFun=dict(stub_test=True, photon_series_index=0)))
+    conversion_options.update(dict(OphysGreenFun=dict(stub_test=True, stub_frames=10, photon_series_index=0)))
 
     # Add Red Channel Functional Imaging
     source_data.update(dict(OphysRedFun=dict(folder_path=str(folder_path), stream_name="Red")))
-    conversion_options.update(dict(OphysRedFun=dict(stub_test=True, photon_series_index=1)))
+    conversion_options.update(dict(OphysRedFun=dict(stub_test=True, stub_frames=10, photon_series_index=1)))
+
+    # Add Green Channel Anatomical Imaging
+    folder_path = data_dir_path / "anat_0" / "TSeries-06202020-0931-004"
+    source_data.update(dict(OphysGreenAna=dict(folder_path=str(folder_path), stream_name="Green")))
+    conversion_options.update(dict(OphysGreenAna=dict(stub_test=True, stub_frames=10, photon_series_index=2)))
+
+    # Add Red Channel Anatomical Imaging
+    source_data.update(dict(OphysRedAna=dict(folder_path=str(folder_path), stream_name="Red")))
+    conversion_options.update(dict(OphysRedAna=dict(stub_test=True, stub_frames=10, photon_series_index=3)))
 
     converter = BrezovecNWBConverter(source_data=source_data)
 
@@ -58,8 +67,8 @@ def session_to_nwb(data_dir_path: Union[str, Path], output_dir_path: Union[str, 
 
 if __name__ == "__main__":
     # Parameters for conversion
-    # root_path = Path("/media/amtra/Samsung_T5/CN_data/")
-    root_path = Path("/home/heberto/Clandinin-CN-data-share/")
+    root_path = Path("/media/amtra/Samsung_T5/CN_data/")
+    # root_path = Path("/home/heberto/Clandinin-CN-data-share/")
     data_dir_path = root_path / "brezovec_example_data/imports/20200620/fly2"
     output_dir_path = root_path / "conversion_nwb"
     stub_test = True

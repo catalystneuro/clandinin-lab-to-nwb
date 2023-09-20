@@ -1,7 +1,6 @@
 from dateutil.parser import parse
 from clandinin_lab_to_nwb.brezovec.brezovecimagingextractor import BrezovecMultiPlaneImagingExtractor
 
-from roiextractors import MultiImagingExtractor
 from neuroconv.datainterfaces.ophys.baseimagingextractorinterface import BaseImagingExtractorInterface
 from neuroconv.utils import FolderPathType
 from neuroconv.utils.dict import DeepDict
@@ -43,34 +42,43 @@ class BrezovecFunctionalGreenImagingInterface(BaseImagingExtractorInterface):
         xml_metadata = self.imaging_extractor.xml_metadata
         session_start_time = parse(xml_metadata["date"])
         metadata["NWBFile"].update(session_start_time=session_start_time)
-
+        
+        # channel_name = 'Green'
+        # metadata["Ophys"]["OpticalChannel"][0].update(
+        #     name=channel_name,
+        #     emission_lambda=513.0, 
+        #     description="Green channel of the microscope, 525/50 nm filter.",
+        # )
+        
+        device_name = "BrukerFluorescenceMicroscope"
         description = f"Version {xml_metadata['version']}"
-        device_name = "BrukerFluorescenceMicroscope"  # TODO doucle check in the paper
         metadata["Ophys"]["Device"][0].update(
             name=device_name,
             description=description,
         )
 
-        imaging_plane_metadata = metadata["Ophys"]["ImagingPlane"][0]
+        imaging_plane_name = "GCaMP6f_functional"
+        imaging_plane_metadata = metadata["Ophys"]["ImagingPlane"][0]# should it be photon_series_index pr imaging_plane_index
         imaging_plane_metadata.update(
-            # optical_channel =
-            #     dict(
-            #         name=self.imaging_extractor.stream_name,
-            #         emission_lambda=525, #513 FPbase
-            #         description="Green channel of the microscope, 525/50 nm filter.",
-            #     ),
+            name = imaging_plane_name,
+            # optical_channel=channel_name,
             device=device_name,
-            imaging_rate=self.imaging_extractor.get_sampling_frequency(),
             excitation_lambda=920.0,
             indicator="GCaMP6f",
+            imaging_rate=self.imaging_extractor.get_sampling_frequency(),
         )
-        two_photon_series_metadata = metadata["Ophys"]["TwoPhotonSeries"][0]
+
+
+        two_photon_series_metadata = metadata["Ophys"]["TwoPhotonSeries"][0] # should it be photon_series_index
         two_photon_series_metadata.update(
             name="FunctionalGreenTwoPhotonSeries",
-            description="Imaging data acquired (GCaMP6f) from the Bruker Two-Photon Microscope and transform to NIfTI. Used for functional imaging readout",  # TODO doucle check in the paper
-            unit="px",
+            imaging_plane=imaging_plane_name,
             format=".nii",
-            scan_line_rate=1 / float(xml_metadata["scanLinePeriod"]),
+            scan_line_rate=1 / float(xml_metadata["scanLinePeriod"]), # why I cannot see it in the NWBFile?
+            rate=self.imaging_extractor.get_sampling_frequency(),
+            description="Imaging data acquired (GCaMP6f) from the Bruker Two-Photon Microscope and transform to NIfTI. Used for functional imaging readout",
+            unit="px",
+            #device=device_name
         )
 
         microns_per_pixel = xml_metadata["micronsPerPixel"]
@@ -82,18 +90,24 @@ class BrezovecFunctionalGreenImagingInterface(BaseImagingExtractorInterface):
             grid_spacing = [
                 y_position_in_meters,
                 x_position_in_meters,
+                z_plane_position_in_meters
             ]
 
             imaging_plane_metadata.update(
-                grid_spacing=grid_spacing, description=f"The plane imaged at {z_plane_position_in_meters} meters depth."
+                grid_spacing=grid_spacing
             )
 
             field_of_view = [
                 y_position_in_meters * image_size_in_pixels[1],
                 x_position_in_meters * image_size_in_pixels[0],
-                z_plane_position_in_meters,
+                z_plane_position_in_meters * image_size_in_pixels[2]
             ]
-            two_photon_series_metadata.update(field_of_view=field_of_view)
+
+            two_photon_series_metadata.update(
+                field_of_view=field_of_view,
+                dimension=image_size_in_pixels,
+                resolution=x_position_in_meters
+                )
 
         return metadata
 
@@ -135,34 +149,42 @@ class BrezovecFunctionalRedImagingInterface(BaseImagingExtractorInterface):
         xml_metadata = self.imaging_extractor.xml_metadata
         session_start_time = parse(xml_metadata["date"])
         metadata["NWBFile"].update(session_start_time=session_start_time)
-
+        
+        # channel_name = 'Red'
+        # metadata["Ophys"]["OpticalChannel"][1].update(
+        #     name=channel_name,
+        #     emission_lambda=581.0, 
+        #     description="Red channel of the microscope, 550/50 nm filter.",
+        # )
+        
+        device_name = "BrukerFluorescenceMicroscope"
         description = f"Version {xml_metadata['version']}"
-        device_name = "BrukerFluorescenceMicroscope"  # TODO doucle check in the paper
         metadata["Ophys"]["Device"][0].update(
             name=device_name,
             description=description,
         )
 
-        imaging_plane_metadata = metadata["Ophys"]["ImagingPlane"][0]
+        imaging_plane_name = "tdTomato_functional"
+        imaging_plane_metadata = metadata["Ophys"]["ImagingPlane"][0]# should it be photon_series_index pr imaging_plane_index
         imaging_plane_metadata.update(
-            # optical_channel =
-            #     dict(
-            #         name=self.imaging_extractor.stream_name,
-            #         emission_lambda=550, #581 FPbase
-            #         description="Red channel of the microscope, 550/50 nm filter.",
-            #     ),
+            name = imaging_plane_name,
+            # optical_channel=channel_name,
             device=device_name,
-            imaging_rate=self.imaging_extractor.get_sampling_frequency(),
             excitation_lambda=920.0,
             indicator="tdTomato",
+            imaging_rate=self.imaging_extractor.get_sampling_frequency(),
         )
+
         two_photon_series_metadata = metadata["Ophys"]["TwoPhotonSeries"][0]
         two_photon_series_metadata.update(
             name="FunctionalRedTwoPhotonSeries",
+            imaging_plane=imaging_plane_name,
+            format=".nii",
+            scan_line_rate=1 / float(xml_metadata["scanLinePeriod"]), # why I cannot see it in the NWBFile?
+            rate=self.imaging_extractor.get_sampling_frequency(),
             description="Imaging data acquired (tdTomato) from the Bruker Two-Photon Microscope and transform to NIfTI. Used for motion correction and registration.",  # TODO doucle check in the paper
             unit="px",
-            format=".nii",
-            scan_line_rate=1 / float(xml_metadata["scanLinePeriod"]),
+            #device=device_name
         )
 
         microns_per_pixel = xml_metadata["micronsPerPixel"]
@@ -174,18 +196,22 @@ class BrezovecFunctionalRedImagingInterface(BaseImagingExtractorInterface):
             grid_spacing = [
                 y_position_in_meters,
                 x_position_in_meters,
+                z_plane_position_in_meters
             ]
 
-            imaging_plane_metadata.update(
-                grid_spacing=grid_spacing, description=f"The plane imaged at {z_plane_position_in_meters} meters depth."
-            )
+            imaging_plane_metadata.update(grid_spacing=grid_spacing)
 
             field_of_view = [
                 y_position_in_meters * image_size_in_pixels[1],
                 x_position_in_meters * image_size_in_pixels[0],
-                z_plane_position_in_meters,
+                z_plane_position_in_meters * image_size_in_pixels[2],
             ]
-            two_photon_series_metadata.update(field_of_view=field_of_view)
+            two_photon_series_metadata.update(
+                field_of_view=field_of_view,
+                dimension=image_size_in_pixels,
+                resolution=x_position_in_meters
+
+                )
 
         return metadata
 
@@ -226,34 +252,42 @@ class BrezovecAnatomicalGreenImagingInterface(BaseImagingExtractorInterface):
         xml_metadata = self.imaging_extractor.xml_metadata
         session_start_time = parse(xml_metadata["date"])
         metadata["NWBFile"].update(session_start_time=session_start_time)
-
+        
+        # channel_name = 'Green'
+        # metadata["Ophys"]["OpticalChannel"][0].update(
+        #     name=channel_name,
+        #     emission_lambda=513.0, 
+        #     description="Green channel of the microscope, 525/50 nm filter.",
+        # )
+        
+        device_name = "BrukerFluorescenceMicroscope"
         description = f"Version {xml_metadata['version']}"
-        device_name = "BrukerFluorescenceMicroscope"  # TODO doucle check in the paper
         metadata["Ophys"]["Device"][0].update(
             name=device_name,
             description=description,
         )
 
-        imaging_plane_metadata = metadata["Ophys"]["ImagingPlane"][0]
+        imaging_plane_name = "GCaMP6f_anatomical"
+        imaging_plane_metadata = metadata["Ophys"]["ImagingPlane"][0]# should it be photon_series_index pr imaging_plane_index
         imaging_plane_metadata.update(
-            # optical_channel =
-            #     dict(
-            #         name=self.imaging_extractor.stream_name,
-            #         emission_lambda=525, #513 FPbase
-            #         description="Green channel of the microscope, 525/50 nm filter.",
-            #     ),
+            name = imaging_plane_name,
+            # optical_channel=channel_name,
             device=device_name,
-            imaging_rate=self.imaging_extractor.get_sampling_frequency(),
             excitation_lambda=920.0,
             indicator="GCaMP6f",
+            imaging_rate=self.imaging_extractor.get_sampling_frequency(),
         )
+
         two_photon_series_metadata = metadata["Ophys"]["TwoPhotonSeries"][0]
         two_photon_series_metadata.update(
             name="AnatomicalGreenTwoPhotonSeries",
-            description="Imaging data acquired (GCaMP6f) from the Bruker Two-Photon Microscope and transform to NIfTI. Not used",  # TODO doucle check in the paper
-            unit="px",
+            imaging_plane=imaging_plane_name,
             format=".nii",
             scan_line_rate=1 / float(xml_metadata["scanLinePeriod"]),
+            rate=self.imaging_extractor.get_sampling_frequency(),
+            description="Imaging data acquired (GCaMP6f) from the Bruker Two-Photon Microscope and transform to NIfTI. Not used",  # TODO doucle check in the paper
+            unit="px",
+            #device=device_name
         )
 
         microns_per_pixel = xml_metadata["micronsPerPixel"]
@@ -265,18 +299,24 @@ class BrezovecAnatomicalGreenImagingInterface(BaseImagingExtractorInterface):
             grid_spacing = [
                 y_position_in_meters,
                 x_position_in_meters,
+                z_plane_position_in_meters
             ]
 
             imaging_plane_metadata.update(
-                grid_spacing=grid_spacing, description=f"The plane imaged at {z_plane_position_in_meters} meters depth."
+                grid_spacing=grid_spacing
             )
 
             field_of_view = [
                 y_position_in_meters * image_size_in_pixels[1],
                 x_position_in_meters * image_size_in_pixels[0],
-                z_plane_position_in_meters,
+                z_plane_position_in_meters* image_size_in_pixels[2]
             ]
-            two_photon_series_metadata.update(field_of_view=field_of_view)
+
+            two_photon_series_metadata.update(
+                field_of_view=field_of_view,
+                dimension=image_size_in_pixels,
+                resolution=x_position_in_meters
+                )
 
         return metadata
 
@@ -317,34 +357,42 @@ class BrezovecAnatomicalRedImagingInterface(BaseImagingExtractorInterface):
         xml_metadata = self.imaging_extractor.xml_metadata
         session_start_time = parse(xml_metadata["date"])
         metadata["NWBFile"].update(session_start_time=session_start_time)
-
+        
+        # channel_name = 'Red'
+        # metadata["Ophys"]["OpticalChannel"][1].update(
+        #     name=channel_name,
+        #     emission_lambda=581.0, 
+        #     description="Red channel of the microscope, 550/50 nm filter.",
+        # )
+        
+        device_name = "BrukerFluorescenceMicroscope"  
         description = f"Version {xml_metadata['version']}"
-        device_name = "BrukerFluorescenceMicroscope"  # TODO doucle check in the paper
         metadata["Ophys"]["Device"][0].update(
             name=device_name,
             description=description,
         )
 
+        imaging_plane_name = "tdTomato_anatomical"
         imaging_plane_metadata = metadata["Ophys"]["ImagingPlane"][0]
         imaging_plane_metadata.update(
-            # optical_channel =
-            #     dict(
-            #         name=self.imaging_extractor.stream_name,
-            #         emission_lambda=550, #581 FPbase
-            #         description="Red channel of the microscope, 550/50 nm filter.",
-            #     ),
+            name = imaging_plane_name,
+            # optical_channel=channel_name,
             device=device_name,
-            imaging_rate=self.imaging_extractor.get_sampling_frequency(),
             excitation_lambda=920.0,
             indicator="tdTomato",
+            imaging_rate=self.imaging_extractor.get_sampling_frequency(),
         )
+
         two_photon_series_metadata = metadata["Ophys"]["TwoPhotonSeries"][0]
         two_photon_series_metadata.update(
             name="AnatomicalRedTwoPhotonSeries",
-            description="Imaging data acquired (tdTomato) from the Bruker Two-Photon Microscope and transform to NIfTI. Used for primary anatomy",  # TODO doucle check in the paper
-            unit="px",
+            imaging_plane=imaging_plane_name,
             format=".nii",
-            scan_line_rate=1 / float(xml_metadata["scanLinePeriod"]),
+            scan_line_rate=1 / float(xml_metadata["scanLinePeriod"]), # why I cannot see it in the NWBFile?
+            rate=self.imaging_extractor.get_sampling_frequency(),
+            description="Imaging data acquired (tdTomato) from the Bruker Two-Photon Microscope and transform to NIfTI. Used for primary anatomy",  # TODO doucle check in the paper
+            unit="px"
+            #device=device_name
         )
 
         microns_per_pixel = xml_metadata["micronsPerPixel"]
@@ -356,17 +404,21 @@ class BrezovecAnatomicalRedImagingInterface(BaseImagingExtractorInterface):
             grid_spacing = [
                 y_position_in_meters,
                 x_position_in_meters,
+                z_plane_position_in_meters
             ]
 
-            imaging_plane_metadata.update(
-                grid_spacing=grid_spacing, description=f"The plane imaged at {z_plane_position_in_meters} meters depth."
-            )
+            imaging_plane_metadata.update(grid_spacing=grid_spacing)
 
             field_of_view = [
                 y_position_in_meters * image_size_in_pixels[1],
                 x_position_in_meters * image_size_in_pixels[0],
-                z_plane_position_in_meters,
+                z_plane_position_in_meters * image_size_in_pixels[2],
             ]
-            two_photon_series_metadata.update(field_of_view=field_of_view)
+            two_photon_series_metadata.update(
+                field_of_view=field_of_view,
+                dimension=image_size_in_pixels,
+                resolution=x_position_in_meters
+
+                )
 
         return metadata
