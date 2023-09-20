@@ -72,7 +72,7 @@ class BrezovecFunctionalGreenImagingInterface(BaseImagingExtractorInterface):
 
         two_photon_series_metadata = metadata["Ophys"]["TwoPhotonSeries"][0]  # should it be photon_series_index
         two_photon_series_metadata.update(
-            name="FunctionalGreenTwoPhotonSeries",
+            name="TwoPhotonSeriesFunctionalGreen",
             imaging_plane=imaging_plane_name,
             format=".nii",
             scan_line_rate=1 / float(xml_metadata["scanLinePeriod"]),  # why I cannot see it in the NWBFile?
@@ -172,7 +172,7 @@ class BrezovecFunctionalRedImagingInterface(BaseImagingExtractorInterface):
 
         two_photon_series_metadata = metadata["Ophys"]["TwoPhotonSeries"][0]
         two_photon_series_metadata.update(
-            name="FunctionalRedTwoPhotonSeries",
+            name="TwoPhotonSeriesFunctionalRed",
             imaging_plane=imaging_plane_name,
             format=".nii",
             scan_line_rate=1 / float(xml_metadata["scanLinePeriod"]),  # why I cannot see it in the NWBFile?
@@ -270,7 +270,7 @@ class BrezovecAnatomicalGreenImagingInterface(BaseImagingExtractorInterface):
 
         two_photon_series_metadata = metadata["Ophys"]["TwoPhotonSeries"][0]
         two_photon_series_metadata.update(
-            name="AnatomicalGreenTwoPhotonSeries",
+            name="TwoPhotonSeriesAnatomicalGreen",
             imaging_plane=imaging_plane_name,
             format=".nii",
             scan_line_rate=1 / float(xml_metadata["scanLinePeriod"]),
@@ -367,7 +367,7 @@ class BrezovecAnatomicalRedImagingInterface(BaseImagingExtractorInterface):
 
         two_photon_series_metadata = metadata["Ophys"]["TwoPhotonSeries"][0]
         two_photon_series_metadata.update(
-            name="AnatomicalRedTwoPhotonSeries",
+            name="TwoPhotonSeriesAnatomicalRed",
             imaging_plane=imaging_plane_name,
             format=".nii",
             scan_line_rate=1 / float(xml_metadata["scanLinePeriod"]),  # why I cannot see it in the NWBFile?
