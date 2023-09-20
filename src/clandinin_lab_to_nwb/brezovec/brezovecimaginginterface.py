@@ -15,7 +15,6 @@ class BrezovecMultiPlaneImagingInterface(BaseImagingExtractorInterface):
     Extractor = BrezovecMultiPlaneImagingExtractor
 
     def __init__(self, folder_path: FolderPathType, stream_name: str, verbose: bool = True):
-
         """
         Initialize reading of NIfTI files.
 

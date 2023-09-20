@@ -37,7 +37,6 @@ def get_channels_from_first_frame(xml_file):
 
     file_attributes_list = []
     for event, elem in ElementTree.iterparse(xml_file, events=("start", "end")):
-
         # We only need one frame so get out out of the loop when the first Frame tag is closed
         if elem.tag == "Frame" and event == "end":
             break
@@ -77,7 +76,6 @@ class BrezovecMultiPlaneImagingExtractor(ImagingExtractor):
 
     @classmethod
     def get_streams(cls, folder_path: PathType) -> dict:
-
         xml_file_path = _get_xml_file_path(folder_path)
         channel_info = get_channels_from_first_frame(xml_file_path)
         channel_info_formated = {f"{channel_name}": f"{channel}" for channel, channel_name in channel_info}
