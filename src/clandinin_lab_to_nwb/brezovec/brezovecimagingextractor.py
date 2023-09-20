@@ -97,7 +97,7 @@ class BrezovecMultiPlaneImagingExtractor(ImagingExtractor):
     def __init__(
         self,
         folder_path: PathType,
-        stream_name: str,  # cannot be a optional argument because name does not match the file denomination
+        stream_name: str,  
     ):
         """
         Create a BrezovecMultiPlaneImagingExtractor instance from a NIfTI file produced by Bruker system.
@@ -124,7 +124,6 @@ class BrezovecMultiPlaneImagingExtractor(ImagingExtractor):
             "For single imaging plane data use BrezovecSinglePlaneImagingExtractor."
         )
 
-        # TODO: All the checks on the channel_names, streams
         self.stream_name = stream_name
         streams = self.get_streams(folder_path=folder_path)
         self._channel_names = list(streams["channel_streams"].keys())
@@ -133,8 +132,6 @@ class BrezovecMultiPlaneImagingExtractor(ImagingExtractor):
         ), f"The selected stream '{stream_name}' is not in the available channel stream '{self._channel_names}'!"
 
         file_names = list(folder_path.glob("*.nii"))
-        # can't extract the names from xml --> they are listed as .ome.tif
-        # TODO: to be implemented in a way that is not dependent to the filename
 
         channel_id = streams["channel_streams"][stream_name]
         file_for_stream = [file.as_posix() for file in file_names if "channel_" + channel_id in file.as_posix()]
