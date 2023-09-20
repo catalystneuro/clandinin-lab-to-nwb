@@ -74,7 +74,6 @@ class BrezovecFunctionalGreenImagingInterface(BaseImagingExtractorInterface):
         two_photon_series_metadata.update(
             name="TwoPhotonSeriesFunctionalGreen",
             imaging_plane=imaging_plane_name,
-            format=".nii",
             scan_line_rate=1 / float(xml_metadata["scanLinePeriod"]),  # why I cannot see it in the NWBFile?
             rate=self.imaging_extractor.get_sampling_frequency(),
             description="Imaging data acquired (GCaMP6f) from the Bruker Two-Photon Microscope and transform to NIfTI. Used for functional imaging readout",
@@ -174,7 +173,6 @@ class BrezovecFunctionalRedImagingInterface(BaseImagingExtractorInterface):
         two_photon_series_metadata.update(
             name="TwoPhotonSeriesFunctionalRed",
             imaging_plane=imaging_plane_name,
-            format=".nii",
             scan_line_rate=1 / float(xml_metadata["scanLinePeriod"]),  # why I cannot see it in the NWBFile?
             rate=self.imaging_extractor.get_sampling_frequency(),
             description="Imaging data acquired (tdTomato) from the Bruker Two-Photon Microscope and transform to NIfTI. Used for motion correction and registration.",  # TODO doucle check in the paper
@@ -272,7 +270,6 @@ class BrezovecAnatomicalGreenImagingInterface(BaseImagingExtractorInterface):
         two_photon_series_metadata.update(
             name="TwoPhotonSeriesAnatomicalGreen",
             imaging_plane=imaging_plane_name,
-            format=".nii",
             scan_line_rate=1 / float(xml_metadata["scanLinePeriod"]),
             rate=self.imaging_extractor.get_sampling_frequency(),
             description="Imaging data acquired (GCaMP6f) from the Bruker Two-Photon Microscope and transform to NIfTI. Not used",  # TODO doucle check in the paper
@@ -369,7 +366,6 @@ class BrezovecAnatomicalRedImagingInterface(BaseImagingExtractorInterface):
         two_photon_series_metadata.update(
             name="TwoPhotonSeriesAnatomicalRed",
             imaging_plane=imaging_plane_name,
-            format=".nii",
             scan_line_rate=1 / float(xml_metadata["scanLinePeriod"]),  # why I cannot see it in the NWBFile?
             rate=self.imaging_extractor.get_sampling_frequency(),
             description="Imaging data acquired (tdTomato) from the Bruker Two-Photon Microscope and transform to NIfTI. Used for primary anatomy",  # TODO doucle check in the paper
