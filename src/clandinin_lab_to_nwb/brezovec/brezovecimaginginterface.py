@@ -57,7 +57,7 @@ class BrezovecFunctionalGreenImagingInterface(BaseImagingExtractorInterface):
             description=description,
         )
 
-        imaging_plane_name = "GCaMP6f_functional"
+        imaging_plane_name = "ImagingPlaneGCaMP6fFunctional"
         imaging_plane_metadata = metadata["Ophys"]["ImagingPlane"][
             0
         ]  # should it be photon_series_index pr imaging_plane_index
@@ -157,7 +157,7 @@ class BrezovecFunctionalRedImagingInterface(BaseImagingExtractorInterface):
             description=description,
         )
 
-        imaging_plane_name = "tdTomato_functional"
+        imaging_plane_name = "ImagingPlaneTdTomatoFunctional"
         imaging_plane_metadata = metadata["Ophys"]["ImagingPlane"][
             0
         ]  # should it be photon_series_index pr imaging_plane_index
@@ -255,7 +255,7 @@ class BrezovecAnatomicalGreenImagingInterface(BaseImagingExtractorInterface):
             description=description,
         )
 
-        imaging_plane_name = "GCaMP6f_anatomical"
+        imaging_plane_name = "ImagingPlaneGCaMP6fAnatomical"
         imaging_plane_metadata = metadata["Ophys"]["ImagingPlane"][
             0
         ]  # should it be photon_series_index pr imaging_plane_index
@@ -354,7 +354,7 @@ class BrezovecAnatomicalRedImagingInterface(BaseImagingExtractorInterface):
             description=description,
         )
 
-        imaging_plane_name = "tdTomato_anatomical"
+        imaging_plane_name = "ImagingPlaneTdTomatoAnatomical"
         imaging_plane_metadata = metadata["Ophys"]["ImagingPlane"][0]
         imaging_plane_metadata.update(
             name=imaging_plane_name,
