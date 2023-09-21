@@ -2,6 +2,7 @@
 from neuroconv import NWBConverter
 from neuroconv.datainterfaces import (
     FicTracDataInterface,
+    VideoInterface,
 )
 
 
@@ -10,4 +11,5 @@ class BrezovecNWBConverter(NWBConverter):
 
     data_interface_classes = dict(
         FicTrac=FicTracDataInterface,
+        Video=VideoInterface,
     )

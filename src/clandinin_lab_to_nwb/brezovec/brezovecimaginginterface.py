@@ -1,7 +1,6 @@
 from dateutil.parser import parse
 from clandinin_lab_to_nwb.brezovec.brezovecimagingextractor import BrezovecMultiPlaneImagingExtractor
 
-from roiextractors import MultiImagingExtractor
 from neuroconv.datainterfaces.ophys.baseimagingextractorinterface import BaseImagingExtractorInterface
 from neuroconv.utils import FolderPathType
 from neuroconv.utils.dict import DeepDict
