@@ -3,11 +3,15 @@ from pathlib import Path
 from typing import Union
 import datetime
 from zoneinfo import ZoneInfo
-
+import os
 from neuroconv.utils import load_dict_from_file, dict_deep_update
 
 from clandinin_lab_to_nwb.brezovec import BrezovecNWBConverter
 
+def find_items_in_directory(directory:str, prefix:str, suffix:str):
+    for item in os.listdir(directory):            
+        if item.startswith(prefix) and item.endswith(suffix):
+            return os.path.join(directory, item) 
 
 def session_to_nwb(data_dir_path: Union[str, Path], output_dir_path: Union[str, Path], stub_test: bool = False):
     data_dir_path = Path(data_dir_path)
@@ -16,43 +20,55 @@ def session_to_nwb(data_dir_path: Union[str, Path], output_dir_path: Union[str, 
         output_dir_path = output_dir_path / "nwb_stub"
     output_dir_path.mkdir(parents=True, exist_ok=True)
 
-    session_id = "20200228_161226"
+    session_id = "20200620"
+    subject_id = "fly2" 
 
-    # Parse subject_id and session_id
-    unformated_date, subject_id = session_id.split("_")  # TODO: maybe enchance subject id this with the fly number
-    parsed_date = datetime.datetime.strptime(unformated_date, "%Y%m%d")
+    # Parse date from session_id
+    parsed_date = datetime.datetime.strptime(session_id, "%Y%m%d")
     nwbfile_path = output_dir_path / f"{session_id}.nwb"
 
     source_data = dict()
     conversion_options = dict()
 
     # Add Fictrac
-    file_path = data_dir_path / "fictrac" / f"fictrac-{session_id}.dat"
+    directory = data_dir_path / "fictrac" 
+    prefix = f"fictrac-{session_id}"
+    suffix = ".dat"
+    file_path = find_items_in_directory(directory=directory, prefix=prefix, suffix=suffix) 
     source_data.update(dict(FicTrac=dict(file_path=str(file_path))))
 
     # Video
-    file_path = data_dir_path / "fictrac" / f"fictrac-{session_id}-raw.avi"
+    suffix = "-raw.avi"
+    file_path = find_items_in_directory(directory=directory, prefix=prefix, suffix=suffix) 
     file_paths = [file_path]
     source_data.update(dict(Video=dict(file_paths=file_paths)))
     conversion_options.update(dict(Video=dict(stub_test=stub_test)))
 
+    # Select correct folder for Functional Imaging
+    directory = data_dir_path / "imports" / session_id / subject_id / "func_0" 
+    prefix = f"TSeries-"
+    suffix = ""
+    folder_path = find_items_in_directory(directory=directory, prefix=prefix, suffix=suffix) 
+
     # Add Green Channel Functional Imaging
-    folder_path = data_dir_path / "func_0" / "TSeries-06202020-0931-003"
     source_data.update(dict(ImagingFunctionalGreen=dict(folder_path=str(folder_path), stream_name="Green")))
-    conversion_options.update(dict(ImagingFunctionalGreen=dict(stub_test=True, stub_frames=10, photon_series_index=0)))
+    conversion_options.update(dict(ImagingFunctionalGreen=dict(stub_test=stub_test, stub_frames=10, photon_series_index=0)))
 
     # Add Red Channel Functional Imaging
     source_data.update(dict(ImagingFunctionalRed=dict(folder_path=str(folder_path), stream_name="Red")))
-    conversion_options.update(dict(ImagingFunctionalRed=dict(stub_test=True, stub_frames=10, photon_series_index=1)))
+    conversion_options.update(dict(ImagingFunctionalRed=dict(stub_test=stub_test, stub_frames=10, photon_series_index=1)))
+
+    # Select correct folder for Anatomical Imaging
+    directory = data_dir_path / "imports" / session_id / subject_id / "anat_0" 
+    folder_path = find_items_in_directory(directory=directory, prefix=prefix, suffix=suffix)
 
     # Add Green Channel Anatomical Imaging
-    folder_path = data_dir_path / "anat_0" / "TSeries-06202020-0931-004"
     source_data.update(dict(ImagingAnatomicalGreen=dict(folder_path=str(folder_path), stream_name="Green")))
-    conversion_options.update(dict(ImagingAnatomicalGreen=dict(stub_test=True, stub_frames=10, photon_series_index=2)))
+    conversion_options.update(dict(ImagingAnatomicalGreen=dict(stub_test=stub_test, stub_frames=10, photon_series_index=2)))
 
     # Add Red Channel Anatomical Imaging
     source_data.update(dict(ImagingAnatomicalRed=dict(folder_path=str(folder_path), stream_name="Red")))
-    conversion_options.update(dict(ImagingAnatomicalRed=dict(stub_test=True, stub_frames=10, photon_series_index=3)))
+    conversion_options.update(dict(ImagingAnatomicalRed=dict(stub_test=stub_test, stub_frames=10, photon_series_index=3)))
 
     converter = BrezovecNWBConverter(source_data=source_data)
 
@@ -81,7 +97,7 @@ if __name__ == "__main__":
     # Parameters for conversion
     root_path = Path("/media/amtra/Samsung_T5/CN_data/")
     # root_path = Path("/home/heberto/Clandinin-CN-data-share/")
-    data_dir_path = root_path / "brezovec_example_data/imports/20200620/fly2"
+    data_dir_path = root_path / "brezovec_example_data"
     output_dir_path = root_path / "conversion_nwb"
     stub_test = True
 
