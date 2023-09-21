@@ -12,7 +12,6 @@ from .brezovecimaginginterface import (
 )
 
 
-
 class BrezovecNWBConverter(NWBConverter):
     """Primary conversion class for the brezovec conversion project."""
 

@@ -97,7 +97,7 @@ class BrezovecMultiPlaneImagingExtractor(ImagingExtractor):
     def __init__(
         self,
         folder_path: PathType,
-        stream_name: str,  
+        stream_name: str,
     ):
         """
         Create a BrezovecMultiPlaneImagingExtractor instance from a NIfTI file produced by Bruker system.
