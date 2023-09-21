@@ -34,24 +34,28 @@ This is the one that was used in the experiment according to personal communicat
 [Old file organization](https://github.com/ClandininLab/brainsss2/blob/main/file_organization.md)
 
 ##  Pending questions
-* What about the rest of the subjects / sessions?
-* What about the video files?
-* What about the fictrac header?
-* Why are the bruker files not in tiff format? In fact
+* What about the rest of the subjects / sessions? We don't have them, they provide another two in the last conversion.
+* What about the video files? They are provided. Both the original and debugging.
+* What about the fictrac header? They might provided. After investigation this is not as critical as it does not contain a lot of metadata but we built in the
+machinery to read it in the data interface in neuroconv anyway.
+* Why are the bruker files not in tiff format?
 * What are the json files in the imports directory?
-* Are the nifti files pre-processed in some way (are we getting the motion corrected ones?) or are they raw?
-* Confirm that the ANT algorithm is only applied at the population level and not at the session one.
+* Are the nifti files pre-processed in some way (are we getting the motion corrected ones?) or are they raw? They are raw.
+* Confirm that the ANT algorithm is only applied at the population level and not at the session one. Yes, this is the most likely scenario so far.
 
 ## General notes
 
 This describes all the data available in the paper.
 ![Figure 1a](./images/figure_1a.png)
 
-
-Overview of pipeline. After dissection of the posterior head cuticle, the fly is mounted under a two-photon microscope and
+Figure caption
+>  Overview of pipeline. After dissection of the posterior head cuticle, the fly is mounted under a two-photon microscope and
 walks on an air-suspended ball in the dark. GCaMP6f is expressed pan-neuronally, as is a
-structural marker, tdTomato. Volumes were acquired at 1.8 Hz at a resolution of 2.6 x 2.6 x 5um
-for 30 minutes to capture neural activity; a subsequent anatomical scan was taken at higher
+structural marker, tdTomato. Volumes were acquired at 1.8 Hz at a resolution of 2.6 x 2.6 x 5um for 30 minutes to capture neural activity; a subsequent anatomical scan was taken at higher spatial resolution (0.6um x 0.6um x 1um). The structural marker was used to correct brain motion. All nine datasets were registered into a single mean brain using the structural marker; these warp parameters were then applied to the functional neural data to bring all flies into the same space.
+
+
+615 um = 1024 * 0.6 um  (so you can infer from this how the images that we get are oriented).
+
 
 
 Device:
@@ -69,10 +73,28 @@ Functional vs anatomical, this are the dimensions of the files when I open them 
 
 Measure of functional:
 (256, 128, 49, 3384)
+
 Measure of anatomical:
 (1024, 512, 241, 100)
 
-Note that there are two channels of them, they are the same size. It is still not clear to me what each channel is as the methods report only an emission lambda but talking with Szonja she mentioned that each channel should have a different lambda.
+for the dimenasional convention of nifti file: [NIfTI doc](https://docs.safe.com/fme/html/FME-Form-Documentation/FME-ReadersWriters/nifti/nifti.htm#). Quote:
+
+> The convention for the axis names is x,y,z, and t, as the 4th dimension is usually used to locate multiple volumes in time.
+
+This together with plotting one of their frames of the anatomical data revelas that their orientation is columns, rows, slices, time.
+
+```python
+single_image = np.mean(img.dataobj[:, :, 20, :], axis=2)
+print(single_image.shape)
+import matplotlib.pyplot as plt
+
+plt.imshow(single_image)
+```
+
+![Alt text](images/shape_plotted.png)
+
+
+
 
 Anyway, for the structure at least, this matches with the paper:
 > Volumes were acquired at 1.8 Hz at a resolution of 2.6 x 2.6 x 5um
@@ -94,7 +116,6 @@ Advanced Normalization Tools, ANTs
 Here a tutorial:
 https://andysbrainbook.readthedocs.io/en/latest/ANTs/ANTs_Overview.html
 
-This makes me think that the files .nii are pre-processed and that the post-processed file (after the drfit correction) are also ni files. In the data folder there is this division between anat and func which maybe is this?
 
 Importantly, we have two channels, and here is general information about what the channels mean:
 
@@ -124,8 +145,16 @@ imports
 
 [Link](https://github.com/ClandininLab/brainsss2/blob/5ec2ddad6793d6115c1ee80302d5cdf8019fe995/file_organization.md?plain=1#L21-L22C88)
 
+It seems that they are using this convention and therefore we know how to label the channels. They should have a different lambda. How to find it?
 
+#### VoltageOutput files
+From [Bruker Control documentation](https://bruker-control.readthedocs.io/en/latest/outputs/index.html?highlight=VoltageOutput#raw-file-types)
+>The voltage recording data is from Bruker’s DAQ box sampling voltage inputs to its many BNC connections that come from the activity of solenoids, stimulating LEDs, PMT shutters,and the animal’s licking behavior.
 
+More specifically
+>The Voltage Recording’s .xml is written in XML v1.0 and primarily tracks the names of each channel recorded on the DAQ and the time that the recording was actually started. This is used when aligning the timestamps of the imaging frames as well as the during the ripping process.
+
+I cannot find any VoltageOutput.csv file in the sessions that we have. Do they have this data? How they synch the behavioural
 ### Frequency on fictrac
 
 The paper says:
@@ -164,6 +193,7 @@ There is also dicom format which has way more structure and is not only for neur
 
 ### Information extracted from XML in the Bruker format
 
+#### Channel names
 We have the name of the channels in the tag File of the XML. Here some samples
 ```python
 --------------------
@@ -174,8 +204,36 @@ Element: File, Path: PVScan/Sequence/Frame/File, Attributes: {'channel': '1', 'c
 Element: File, Path: PVScan/Sequence/Frame/File, Attributes: {'channel': '2', 'channelName': 'Green', 'filename': 'TSeries-02282020-0943-001_Cycle00001_Ch2_000002.ome.tif'}, Text: None
 Element: File, Path: PVScan/Sequence/Frame/File, Attributes: {'channel': '1', 'channelName': 'Red', 'filename': 'TSeries-02282020-0943-001_Cycle00001_Ch1_000003.ome.tif'}, Text: None
 --------------------
-
 ```
+But you cannot use the `filename` to identify the .nii file and extract data from that.
+
+#### Time information
+In the sequence element (identify a cycle → acquisition of all 3d image):
+example:
+```python
+------------------
+  	<Sequence type="TSeries ZSeries Element" cycle="1" time="12:20:53.6844573"
+	<Sequence type="TSeries ZSeries Element" cycle="2" time="12:51:30.4521509"
+	<Sequence type="TSeries ZSeries Element" cycle="3" time="12:51:30.4621509"
+------------------
+```
+this time info probably relate to the time the files for each “stream” (plane acquisition of a single channel) is created. Bruker datasheet should be checked to confirm that in the first cycle the time the file is created coincides with the time the session starts. While for the other cycles, the file are generated once the entire acquisition (all cycles) is done. Indeed we can notice a time difference from the first cycle to the second cycle that is equivalent to the duration of the session (31 min = cycles: 3384 * sampling_frequency: 1.8737).
+In the frame element (identify a plane acquisition → acquisition of the single 2d image inside a cycle):
+	example:
+```python
+------------------
+<Sequence type="TSeries ZSeries Element" cycle="1"
+	<Frame relativeTime="0.104654892" absoluteTime="35.984654892001" index="1" → first plane
+	<Frame relativeTime="0.113376133" absoluteTime="35.993376133001" index="2" → second plane
+	…
+<Sequence type="TSeries ZSeries Element" cycle="2"
+	<Frame relativeTime="0.636650593" absoluteTime="36.516650593001" index="1" → first plane
+------------------
+```
+Here there are `relativeTime` and `absoluteTime` that indicate the time that a plane is acquired. The difference between to consecutive `absoluteTime` is the same value as the difference between to consecutive `relativeTime`. From Bruker datasheet we need to check which is the time offset for the two different timestamps.
+However we can use both relativeTime or absolute time to compute the `sampling_frequency`, intended as the frequency at which a 3d image is acquired (1.87 Hz here) and also the `plane_acquisition_rate`, intended as the rate at which each plane is acquired in a cycle (114 Hz circa here)
+
+
 
 Questions for Szonja:
 * What is a cycle? The sequence tags in the XML file look like this. Here some samples:
@@ -195,8 +253,30 @@ Element: Sequence, Path: PVScan/Sequence, Attributes: {'type': 'TSeries ZSeries 
 
 --------------------
 ```
+
+Each cycle (a `Sequence` element) is an acquisition of the volumetric image in both channels. Indeed, there are 3384 cycles
+In each cycle there are frames (planes) for each channel. The value of `"ZAxis"` subindex 1 increases by 5 units (μm I guess) each `Frame` of a cycle .
+```python
+------------------
+<Frame relativeTime="0.104654892" absoluteTime="35.984654892001" index="1" parameterSet="CurrentSettings">
+    ...
+    <SubindexedValues index="ZAxis">
+        <SubindexedValue subindex="0" value="146.25" description="Z Focus" />
+        <SubindexedValue subindex="1" value="100" description="Bruker 400 μm Piezo" />
+    ...
+</Frame>
+<Frame relativeTime="0.113376133" absoluteTime="35.993376133001" index="2" parameterSet="CurrentSettings">
+    ...
+    <SubindexedValues index="ZAxis">
+        <SubindexedValue subindex="0" value="146.25" description="Z Focus" />
+        <SubindexedValue subindex="1" value="105" description="Bruker 400 μm Piezo" />
+    ...
+</Frame>
+------------------
+```
+
 * The unique tags in the XML file are: `{'PVStateShard', 'File', 'ExtraParameters', 'SystemID', 'Sequence', 'VoltageOutput', 'IndexedValue', 'SystemIDs', 'SubindexedValue', 'SubindexedValues', 'PVScan', 'Frame', 'PVStateValue'}`. I wonder if they are described somewhere.
-*
+Maybe from Bruker documentation?
 
 # Notes about FicTrac
 
