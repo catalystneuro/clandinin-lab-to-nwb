@@ -71,6 +71,7 @@ class BrezovecMultiPlaneImagingExtractor(ImagingExtractor):
     """Specialized extractor Brezovec conversion project: reading NIfTI files produced by Bruker system."""
 
     extractor_name = "BrezovecMultiPlaneImaging"
+    extractor_name = "BrezovecMultiPlaneImaging"
     is_writable = True
     mode = "folder"
 
@@ -84,6 +85,7 @@ class BrezovecMultiPlaneImagingExtractor(ImagingExtractor):
         return streams
 
     @classmethod
+    def _determine_imaging_is_volumetric(cls, xml_root: ElementTree.Element) -> bool:
     def _determine_imaging_is_volumetric(cls, xml_root: ElementTree.Element) -> bool:
         """
         Determines whether imaging is volumetric based on 'zDevice' configuration value.
