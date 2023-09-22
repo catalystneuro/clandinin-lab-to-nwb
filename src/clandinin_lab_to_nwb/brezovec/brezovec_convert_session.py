@@ -15,15 +15,12 @@ def find_items_in_directory(directory: str, prefix: str, suffix: str):
             return os.path.join(directory, item)
 
 
-def session_to_nwb(data_dir_path: Union[str, Path], output_dir_path: Union[str, Path], stub_test: bool = False):
+def session_to_nwb(data_dir_path: Union[str, Path], output_dir_path: Union[str, Path], subject_id: str, session_id: str, stub_test: bool = False):
     data_dir_path = Path(data_dir_path)
     output_dir_path = Path(output_dir_path)
     if stub_test:
         output_dir_path = output_dir_path / "nwb_stub"
     output_dir_path.mkdir(parents=True, exist_ok=True)
-
-    session_id = "20200620"
-    subject_id = "fly2"
 
     # Parse date from session_id
     parsed_date = datetime.datetime.strptime(session_id, "%Y%m%d")
@@ -55,7 +52,7 @@ def session_to_nwb(data_dir_path: Union[str, Path], output_dir_path: Union[str, 
     # Add Green Channel Functional Imaging
     source_data.update(dict(ImagingFunctionalGreen=dict(folder_path=str(folder_path), stream_name="Green")))
     conversion_options.update(
-        dict(ImagingFunctionalGreen=dict(stub_test=stub_test, stub_frames=10, photon_series_index=0))
+        dict(ImagingFunctionalGreen=dict(stub_test=stub_test, stub_frames=10, photon_series_index=0)) #TODO: remove stub_frames
     )
 
     # Add Red Channel Functional Imaging
