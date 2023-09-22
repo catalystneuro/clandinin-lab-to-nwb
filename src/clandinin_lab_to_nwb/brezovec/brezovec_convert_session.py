@@ -15,7 +15,13 @@ def find_items_in_directory(directory: str, prefix: str, suffix: str):
             return os.path.join(directory, item)
 
 
-def session_to_nwb(data_dir_path: Union[str, Path], output_dir_path: Union[str, Path], subject_id: str, session_id: str, stub_test: bool = False):
+def session_to_nwb(
+    data_dir_path: Union[str, Path],
+    output_dir_path: Union[str, Path],
+    subject_id: str,
+    session_id: str,
+    stub_test: bool = False,
+):
     data_dir_path = Path(data_dir_path)
     output_dir_path = Path(output_dir_path)
     if stub_test:
@@ -52,7 +58,9 @@ def session_to_nwb(data_dir_path: Union[str, Path], output_dir_path: Union[str, 
     # Add Green Channel Functional Imaging
     source_data.update(dict(ImagingFunctionalGreen=dict(folder_path=str(folder_path), stream_name="Green")))
     conversion_options.update(
-        dict(ImagingFunctionalGreen=dict(stub_test=stub_test, stub_frames=10, photon_series_index=0)) #TODO: remove stub_frames
+        dict(
+            ImagingFunctionalGreen=dict(stub_test=stub_test, stub_frames=10, photon_series_index=0)
+        )  # TODO: remove stub_frames
     )
 
     # Add Red Channel Functional Imaging
