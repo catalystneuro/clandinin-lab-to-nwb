@@ -49,6 +49,8 @@ def session_to_nwb(
     source_data.update(dict(Video=dict(file_paths=file_paths)))
     conversion_options.update(dict(Video=dict(stub_test=stub_test)))
 
+    stub_frames = 10 if stub_test else None
+
     # Select correct folder for Functional Imaging
     directory = data_dir_path / "imports" / session_id / subject_id / "func_0"
     prefix = f"TSeries-"
@@ -58,15 +60,13 @@ def session_to_nwb(
     # Add Green Channel Functional Imaging
     source_data.update(dict(ImagingFunctionalGreen=dict(folder_path=str(folder_path), stream_name="Green")))
     conversion_options.update(
-        dict(
-            ImagingFunctionalGreen=dict(stub_test=stub_test, stub_frames=10, photon_series_index=0)
-        )  # TODO: remove stub_frames
+        dict(ImagingFunctionalGreen=dict(stub_test=stub_test, stub_frames=stub_frames, photon_series_index=0))
     )
 
     # Add Red Channel Functional Imaging
     source_data.update(dict(ImagingFunctionalRed=dict(folder_path=str(folder_path), stream_name="Red")))
     conversion_options.update(
-        dict(ImagingFunctionalRed=dict(stub_test=stub_test, stub_frames=10, photon_series_index=1))
+        dict(ImagingFunctionalRed=dict(stub_test=stub_test, stub_frames=stub_frames, photon_series_index=1))
     )
 
     # Select correct folder for Anatomical Imaging
@@ -76,13 +76,13 @@ def session_to_nwb(
     # Add Green Channel Anatomical Imaging
     source_data.update(dict(ImagingAnatomicalGreen=dict(folder_path=str(folder_path), stream_name="Green")))
     conversion_options.update(
-        dict(ImagingAnatomicalGreen=dict(stub_test=stub_test, stub_frames=10, photon_series_index=2))
+        dict(ImagingAnatomicalGreen=dict(stub_test=stub_test, stub_frames=stub_frames, photon_series_index=2))
     )
 
     # Add Red Channel Anatomical Imaging
     source_data.update(dict(ImagingAnatomicalRed=dict(folder_path=str(folder_path), stream_name="Red")))
     conversion_options.update(
-        dict(ImagingAnatomicalRed=dict(stub_test=stub_test, stub_frames=10, photon_series_index=3))
+        dict(ImagingAnatomicalRed=dict(stub_test=stub_test, stub_frames=stub_frames, photon_series_index=3))
     )
 
     converter = BrezovecNWBConverter(source_data=source_data)
@@ -110,14 +110,19 @@ def session_to_nwb(
 
 if __name__ == "__main__":
     # Parameters for conversion
-    root_path = Path("/media/amtra/Samsung_T5/CN_data/")
-    # root_path = Path("/home/heberto/Clandinin-CN-data-share/")
+    # root_path = Path("/media/amtra/Samsung_T5/CN_data/")
+    root_path = Path("/home/heberto/Clandinin-CN-data-share/")
     data_dir_path = root_path / "brezovec_example_data"
     output_dir_path = root_path / "conversion_nwb"
+    output_dir_path = Path.home() / "conversion_nwb"
     stub_test = True
+    session_id = "20200228"
+    subject_id = "fly3"
 
     session_to_nwb(
         data_dir_path=data_dir_path,
         output_dir_path=output_dir_path,
         stub_test=stub_test,
+        session_id=session_id,
+        subject_id=subject_id,
     )
