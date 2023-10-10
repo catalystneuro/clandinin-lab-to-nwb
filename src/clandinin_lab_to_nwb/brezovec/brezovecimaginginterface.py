@@ -40,8 +40,6 @@ class BrezovecFunctionalGreenImagingInterface(BaseImagingExtractorInterface):
         metadata = super().get_metadata()
 
         xml_metadata = self.imaging_extractor.xml_metadata
-        session_start_time = parse(xml_metadata["date"])
-        metadata["NWBFile"].update(session_start_time=session_start_time)
 
         # channel_name = 'Green'
         # metadata["Ophys"]["OpticalChannel"][0].update(
@@ -137,8 +135,6 @@ class BrezovecFunctionalRedImagingInterface(BaseImagingExtractorInterface):
         metadata = super().get_metadata()
 
         xml_metadata = self.imaging_extractor.xml_metadata
-        session_start_time = parse(xml_metadata["date"])
-        metadata["NWBFile"].update(session_start_time=session_start_time)
 
         # channel_name = 'Red'
         # metadata["Ophys"]["OpticalChannel"][1].update(
@@ -232,8 +228,6 @@ class BrezovecAnatomicalGreenImagingInterface(BaseImagingExtractorInterface):
         metadata = super().get_metadata()
 
         xml_metadata = self.imaging_extractor.xml_metadata
-        session_start_time = parse(xml_metadata["date"])
-        metadata["NWBFile"].update(session_start_time=session_start_time)
 
         # channel_name = 'Green'
         # metadata["Ophys"]["OpticalChannel"][0].update(
@@ -328,8 +322,6 @@ class BrezovecAnatomicalRedImagingInterface(BaseImagingExtractorInterface):
         metadata = super().get_metadata()
 
         xml_metadata = self.imaging_extractor.xml_metadata
-        session_start_time = parse(xml_metadata["date"])
-        metadata["NWBFile"].update(session_start_time=session_start_time)
 
         # channel_name = 'Red'
         # metadata["Ophys"]["OpticalChannel"][1].update(

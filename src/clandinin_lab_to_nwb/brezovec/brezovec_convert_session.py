@@ -1,7 +1,7 @@
 """Primary script to run to convert an entire session for of data using the NWBConverter."""
 from pathlib import Path
 from typing import Union
-import datetime
+from datetime import datetime
 from zoneinfo import ZoneInfo
 import os
 from neuroconv.utils import load_dict_from_file, dict_deep_update
@@ -13,6 +13,17 @@ def find_items_in_directory(directory: str, prefix: str, suffix: str):
     for item in os.listdir(directory):
         if item.startswith(prefix) and item.endswith(suffix):
             return os.path.join(directory, item)
+
+
+def read_session_start_time_from_file(xml_file):
+    from xml.etree import ElementTree
+
+    for event, elem in ElementTree.iterparse(xml_file, events=("start", "end")):
+        if elem.tag == "PVScan" and event == "end":
+            date_string = elem.attrib.get("date")
+            date = datetime.strptime(date_string, "%m/%d/%Y %H:%M:%S  %p")
+
+    return date
 
 
 def session_to_nwb(
@@ -28,8 +39,6 @@ def session_to_nwb(
         output_dir_path = output_dir_path / "nwb_stub"
     output_dir_path.mkdir(parents=True, exist_ok=True)
 
-    # Parse date from session_id
-    parsed_date = datetime.datetime.strptime(session_id, "%Y%m%d")
     nwbfile_path = output_dir_path / f"{session_id}.nwb"
 
     source_data = dict()
@@ -56,6 +65,8 @@ def session_to_nwb(
     prefix = f"TSeries-"
     suffix = ""
     folder_path = find_items_in_directory(directory=directory, prefix=prefix, suffix=suffix)
+
+    xml_file_path = Path(folder_path) / f"{Path(folder_path).name}.xml"
 
     # Add Green Channel Functional Imaging
     source_data.update(dict(ImagingFunctionalGreen=dict(folder_path=str(folder_path), stream_name="Green")))
@@ -87,17 +98,19 @@ def session_to_nwb(
 
     converter = BrezovecNWBConverter(source_data=source_data)
 
-    # Add datetime to conversion
     metadata = converter.get_metadata()
-    tzinfo = ZoneInfo("America/Los_Angeles")  # Time zone for Stanford, California
-    date = parsed_date.replace(tzinfo=tzinfo)
-    metadata["NWBFile"]["session_start_time"] = date
-    metadata["Subject"]["subject_id"] = subject_id
 
     # Update default metadata with the editable in the corresponding yaml file
     editable_metadata_path = Path(__file__).parent / "brezovec_metadata.yaml"
     editable_metadata = load_dict_from_file(editable_metadata_path)
     metadata = dict_deep_update(metadata, editable_metadata)
+
+    # Add datetime to conversion
+    date = read_session_start_time_from_file(xml_file_path)
+    timezone = ZoneInfo("America/Los_Angeles")  # Time zone for Stanford, California
+    localized_date = date.replace(tzinfo=timezone)
+    metadata["NWBFile"]["session_start_time"] = localized_date
+    metadata["Subject"]["subject_id"] = subject_id
 
     # Run conversion
     converter.run_conversion(
