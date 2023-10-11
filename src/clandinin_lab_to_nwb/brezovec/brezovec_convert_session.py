@@ -5,6 +5,7 @@ from datetime import datetime
 from zoneinfo import ZoneInfo
 import os
 from neuroconv.utils import load_dict_from_file, dict_deep_update
+from dateutil import parser
 
 from clandinin_lab_to_nwb.brezovec import BrezovecNWBConverter
 
@@ -23,7 +24,16 @@ def read_session_start_time_from_file(xml_file):
             date_string = elem.attrib.get("date")
             date = datetime.strptime(date_string, "%m/%d/%Y %H:%M:%S  %p")
 
-    return date
+    tree = ElementTree.parse(xml_file)
+    xml_root = tree.getroot()
+    first_sequence = xml_root.find(".//Sequence")
+    sequence_time = first_sequence.get("time")
+    first_timestamp = parser.parse(sequence_time)
+    
+    combined_datetime = datetime(date.year, date.month, date.day,
+                             first_timestamp.hour, first_timestamp.minute, first_timestamp.second, first_timestamp.microsecond)
+
+    return combined_datetime
 
 
 def session_to_nwb(
@@ -106,9 +116,9 @@ def session_to_nwb(
     metadata = dict_deep_update(metadata, editable_metadata)
 
     # Add datetime to conversion
-    date = read_session_start_time_from_file(xml_file_path)
+    session_start_datetime = read_session_start_time_from_file(xml_file_path)
     timezone = ZoneInfo("America/Los_Angeles")  # Time zone for Stanford, California
-    localized_date = date.replace(tzinfo=timezone)
+    localized_date = session_start_datetime.replace(tzinfo=timezone)
     metadata["NWBFile"]["session_start_time"] = localized_date
     metadata["Subject"]["subject_id"] = subject_id
 
@@ -123,14 +133,14 @@ def session_to_nwb(
 
 if __name__ == "__main__":
     # Parameters for conversion
-    # root_path = Path("/media/amtra/Samsung_T5/CN_data/")
-    root_path = Path("/home/heberto/Clandinin-CN-data-share/")
+    root_path = Path("/media/amtra/Samsung_T5/CN_data/")
+    # root_path = Path("/home/heberto/Clandinin-CN-data-share/")
     data_dir_path = root_path / "brezovec_example_data"
     output_dir_path = root_path / "conversion_nwb"
     output_dir_path = Path.home() / "conversion_nwb"
     stub_test = True
-    session_id = "20200228"
-    subject_id = "fly3"
+    session_id = "20200620"
+    subject_id = "fly2"
 
     session_to_nwb(
         data_dir_path=data_dir_path,
