@@ -29,9 +29,16 @@ def read_session_start_time_from_file(xml_file):
     first_sequence = xml_root.find(".//Sequence")
     sequence_time = first_sequence.get("time")
     first_timestamp = parser.parse(sequence_time)
-    
-    combined_datetime = datetime(date.year, date.month, date.day,
-                             first_timestamp.hour, first_timestamp.minute, first_timestamp.second, first_timestamp.microsecond)
+
+    combined_datetime = datetime(
+        date.year,
+        date.month,
+        date.day,
+        first_timestamp.hour,
+        first_timestamp.minute,
+        first_timestamp.second,
+        first_timestamp.microsecond,
+    )
 
     return combined_datetime
 

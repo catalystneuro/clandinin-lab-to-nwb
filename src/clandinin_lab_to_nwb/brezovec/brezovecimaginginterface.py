@@ -41,7 +41,7 @@ class BrezovecFunctionalGreenImagingInterface(BaseImagingExtractorInterface):
 
         xml_metadata = self.imaging_extractor.xml_metadata
 
-        #TODO add timezone info
+        # TODO add timezone info
         series_datetime = self.imaging_extractor.get_series_datetime()
         # Convert the datetime in UTC seconds
         starting_time = series_datetime.timestamp()
@@ -79,7 +79,7 @@ class BrezovecFunctionalGreenImagingInterface(BaseImagingExtractorInterface):
             rate=self.imaging_extractor.get_sampling_frequency(),
             description="Imaging data acquired (GCaMP6f) from the Bruker Two-Photon Microscope and transform to NIfTI. Used for functional imaging readout",
             unit="px",
-            starting_time = starting_time #TODO time difference with the session_start_time
+            starting_time=starting_time  # TODO time difference with the session_start_time
             # device=device_name
         )
 
@@ -142,7 +142,7 @@ class BrezovecFunctionalRedImagingInterface(BaseImagingExtractorInterface):
 
         xml_metadata = self.imaging_extractor.xml_metadata
 
-        #TODO add timezone info
+        # TODO add timezone info
         series_datetime = self.imaging_extractor.get_series_datetime()
         # Convert the datetime in UTC seconds
         starting_time = series_datetime.timestamp()
@@ -180,7 +180,7 @@ class BrezovecFunctionalRedImagingInterface(BaseImagingExtractorInterface):
             rate=self.imaging_extractor.get_sampling_frequency(),
             description="Imaging data acquired (tdTomato) from the Bruker Two-Photon Microscope and transform to NIfTI. Used for motion correction and registration.",  # TODO doucle check in the paper
             unit="px",
-            starting_time = starting_time #TODO time difference with the session_start_time
+            starting_time=starting_time  # TODO time difference with the session_start_time
             # device=device_name
         )
 
@@ -241,7 +241,7 @@ class BrezovecAnatomicalGreenImagingInterface(BaseImagingExtractorInterface):
 
         xml_metadata = self.imaging_extractor.xml_metadata
 
-        #TODO add timezone info
+        # TODO add timezone info
         series_datetime = self.imaging_extractor.get_series_datetime()
         # Convert the datetime in UTC seconds
         starting_time = series_datetime.timestamp()
@@ -279,7 +279,7 @@ class BrezovecAnatomicalGreenImagingInterface(BaseImagingExtractorInterface):
             rate=self.imaging_extractor.get_sampling_frequency(),
             description="Imaging data acquired (GCaMP6f) from the Bruker Two-Photon Microscope and transform to NIfTI. Not used",
             unit="px",
-            starting_time = starting_time #TODO time difference with the session_start_time
+            starting_time=starting_time  # TODO time difference with the session_start_time
             # device=device_name
         )
 
@@ -341,7 +341,7 @@ class BrezovecAnatomicalRedImagingInterface(BaseImagingExtractorInterface):
 
         xml_metadata = self.imaging_extractor.xml_metadata
 
-        #TODO add timezone info
+        # TODO add timezone info
         series_datetime = self.imaging_extractor.get_series_datetime()
         # Convert the datetime in UTC seconds
         starting_time = series_datetime.timestamp()
@@ -379,7 +379,7 @@ class BrezovecAnatomicalRedImagingInterface(BaseImagingExtractorInterface):
             rate=self.imaging_extractor.get_sampling_frequency(),
             description="Imaging data acquired (tdTomato) from the Bruker Two-Photon Microscope and transform to NIfTI. Used for primary anatomy",  # TODO doucle check in the paper
             unit="px",
-            starting_time = starting_time #TODO time difference with the session_start_time
+            starting_time=starting_time  # TODO time difference with the session_start_time
             # device=device_name
         )
 
