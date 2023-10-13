@@ -19,16 +19,24 @@ def find_items_in_directory(directory: str, prefix: str, suffix: str):
 def read_session_start_time_from_file(xml_file):
     from xml.etree import ElementTree
 
+    date = None
+    first_timestamp = None
+
     for event, elem in ElementTree.iterparse(xml_file, events=("start", "end")):
-        if elem.tag == "PVScan" and event == "end":
+        # Extract the date from PVScan
+        if date is None and elem.tag == "PVScan" and event == "end":
             date_string = elem.attrib.get("date")
             date = datetime.strptime(date_string, "%m/%d/%Y %H:%M:%S  %p")
+            elem.clear()
 
-    tree = ElementTree.parse(xml_file)
-    xml_root = tree.getroot()
-    first_sequence = xml_root.find(".//Sequence")
-    sequence_time = first_sequence.get("time")
-    first_timestamp = parser.parse(sequence_time)
+        # Extract the time from Sequence
+        if first_timestamp is None and elem.tag == "Sequence" and event == "end":
+            sequence_time = elem.get("time")
+            first_timestamp = parser.parse(sequence_time)
+            elem.clear()
+
+        if date is not None and first_timestamp is not None:
+            break
 
     combined_datetime = datetime(
         date.year,
