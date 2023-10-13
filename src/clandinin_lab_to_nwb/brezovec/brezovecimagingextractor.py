@@ -97,7 +97,7 @@ class BrezovecMultiPlaneImagingExtractor(ImagingExtractor):
     def __init__(
         self,
         folder_path: PathType,
-        stream_name: str,  # cannot be a optional argument because name does not match the file denomination
+        stream_name: str,
     ):
         """
         Create a BrezovecMultiPlaneImagingExtractor instance from a NIfTI file produced by Bruker system.
@@ -124,7 +124,6 @@ class BrezovecMultiPlaneImagingExtractor(ImagingExtractor):
             "For single imaging plane data use BrezovecSinglePlaneImagingExtractor."
         )
 
-        # TODO: All the checks on the channel_names, streams
         self.stream_name = stream_name
         streams = self.get_streams(folder_path=folder_path)
         self._channel_names = list(streams["channel_streams"].keys())
@@ -133,8 +132,6 @@ class BrezovecMultiPlaneImagingExtractor(ImagingExtractor):
         ), f"The selected stream '{stream_name}' is not in the available channel stream '{self._channel_names}'!"
 
         file_names = list(folder_path.glob("*.nii"))
-        # can't extract the names from xml --> they are listed as .ome.tif
-        # TODO: to be implemented in a way that is not dependent to the filename
 
         channel_id = streams["channel_streams"][stream_name]
         file_for_stream = [file.as_posix() for file in file_names if "channel_" + channel_id in file.as_posix()]
@@ -189,11 +186,13 @@ class BrezovecMultiPlaneImagingExtractor(ImagingExtractor):
         timestamps = [absolute_times[t] for t in np.arange(0, len(absolute_times), self._num_planes_per_channel_stream)]
         return np.array(timestamps)
 
+    # Since we define one TwoPhotonSeries per channel, here it should return the name of the single channel
     def get_channel_names(self) -> list:
-        return self._channel_names
+        # return self._channel_names
+        return [self.stream_name]
 
     def get_num_channels(self) -> int:
-        return len(self.get_channel_names())
+        return 1  # len(self.get_channel_names())
 
     def get_video(
         self, start_frame: Optional[int] = None, end_frame: Optional[int] = None, channel: int = 0
@@ -205,7 +204,7 @@ class BrezovecMultiPlaneImagingExtractor(ImagingExtractor):
         (t, y - rows, x - columns, z)
         """
         if start_frame is not None and end_frame is not None and start_frame == end_frame:
-            return self.nibabel_image.dataobj[:, :, :, start_frame].transpose(3, 1, 0, 2)
+            return self.nibabel_image.dataobj[:, :, :, start_frame].transpose(1, 0, 2)
 
         end_frame = end_frame or self.get_num_frames()
         start_frame = start_frame or 0
