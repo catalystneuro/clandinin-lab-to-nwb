@@ -23,3 +23,12 @@ class BrezovecNWBConverter(NWBConverter):
         ImagingAnatomicalRed=BrezovecAnatomicalRedImagingInterface,
         Video=VideoInterface,
     )
+
+    def temporally_align_data_interfaces(self):
+        metadata= self.get_metadata()
+        session_start_time = metadata["NWBFile"]["session_start_time"]
+        UTC_session_start_time = session_start_time.timestamp()
+        for i in range(4):
+            UTC_startig_time = metadata['Ophys']['TwoPhotonSeries'][i]['starting_time']
+            aligned_starting_time = UTC_startig_time-UTC_session_start_time
+            metadata['Ophys']['TwoPhotonSeries'][i]['starting_time'] = aligned_starting_time

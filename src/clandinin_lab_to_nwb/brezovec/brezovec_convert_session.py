@@ -134,8 +134,7 @@ def session_to_nwb(
     session_start_datetime = read_session_start_time_from_file(xml_file_path)
     timezone = ZoneInfo("America/Los_Angeles")  # Time zone for Stanford, California
     localized_date = session_start_datetime.replace(tzinfo=timezone)
-    metadata["NWBFile"]["session_start_time"] = localized_date
-    metadata["Subject"]["subject_id"] = subject_id
+    metadata = dict_deep_update(metadata,{'NWBFile':{'session_start_time':localized_date}, 'Subject':{'subject_id':subject_id}})
 
     # Run conversion
     converter.run_conversion(
@@ -144,7 +143,6 @@ def session_to_nwb(
         conversion_options=conversion_options,
         overwrite=True,
     )
-
 
 if __name__ == "__main__":
     # Parameters for conversion

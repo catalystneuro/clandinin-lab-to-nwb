@@ -55,15 +55,39 @@ def read_session_date_from_file(folder_path: PathType):
     from xml.etree import ElementTree
 
     folder_path = Path(folder_path)
-    xml_file_path = folder_path / f"{folder_path.name}.xml"
-    assert xml_file_path.is_file(), f"The XML configuration file is not found at '{folder_path}'."
+    xml_file = folder_path / f"{folder_path.name}.xml"
+    assert xml_file.is_file(), f"The XML configuration file is not found at '{folder_path}'."
 
-    for event, elem in ElementTree.iterparse(xml_file_path, events=("start", "end")):
-        if elem.tag == "PVScan" and event == "end":
-            session_date_string = elem.attrib.get("date")
-            session_date = datetime.strptime(session_date_string, "%m/%d/%Y %H:%M:%S  %p")
+    date = None
+    first_timestamp = None
+    for event, elem in ElementTree.iterparse(xml_file, events=("start", "end")):
 
-    return session_date
+        # Extract the date from PVScan
+        if date is None and elem.tag == "PVScan" and event == "end":
+            date_string = elem.attrib.get("date")
+            date = datetime.strptime(date_string, "%m/%d/%Y %H:%M:%S  %p")
+            elem.clear()
+
+        # Extract the time from Sequence
+        if first_timestamp is None and elem.tag == "Sequence" and event == "end":
+            sequence_time = elem.get("time")
+            first_timestamp = parser.parse(sequence_time)
+            elem.clear()
+
+        if date is not None and first_timestamp is not None:
+            break
+
+    combined_datetime = datetime(
+        date.year,
+        date.month,
+        date.day,
+        first_timestamp.hour,
+        first_timestamp.minute,
+        first_timestamp.second,
+        first_timestamp.microsecond,
+    )
+
+    return combined_datetime
 
 
 def _parse_xml(folder_path: PathType) -> ElementTree.Element:
@@ -206,23 +230,8 @@ class BrezovecMultiPlaneImagingExtractor(ImagingExtractor):
         return np.array(timestamps)
 
     def get_series_datetime(self):
-        first_sequence = self._xml_root.find(".//Sequence")
-        sequence_time = first_sequence.get("time")
-        first_timestamp = parser.parse(sequence_time)
-
-        session_date = read_session_date_from_file(folder_path=self.folder_path)
-
-        combined_datetime = datetime(
-            session_date.year,
-            session_date.month,
-            session_date.day,
-            first_timestamp.hour,
-            first_timestamp.minute,
-            first_timestamp.second,
-            first_timestamp.microsecond,
-        )
-
-        return combined_datetime
+        series_datetime = read_session_date_from_file(folder_path=self.folder_path)
+        return series_datetime
 
     # Since we define one TwoPhotonSeries per channel, here it should return the name of the single channel
     def get_channel_names(self) -> list:
