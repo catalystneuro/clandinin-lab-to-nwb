@@ -61,7 +61,6 @@ def read_session_date_from_file(folder_path: PathType):
     date = None
     first_timestamp = None
     for event, elem in ElementTree.iterparse(xml_file, events=("start", "end")):
-
         # Extract the date from PVScan
         if date is None and elem.tag == "PVScan" and event == "end":
             date_string = elem.attrib.get("date")
