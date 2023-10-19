@@ -14,3 +14,5 @@ Subject:
   species: Drosophila melanogaster
   age: 3D/4D
   sex: "F"  # From the methods in the paper
+  genotype: "w+/w+;UAS-myr::tdTomato/UAS-GCaMP6f;nSyb-Gal4/+"
+  description: "Flies were raised on molasses medium at 25 °C with a 12/12-h light/dark cycle. Flies were housed in mixed male/female vials of 10-20 individuals. 3-4 days post-eclosion females were used for imaging."
