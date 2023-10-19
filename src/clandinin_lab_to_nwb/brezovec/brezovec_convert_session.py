@@ -1,10 +1,11 @@
 """Primary script to run to convert an entire session for of data using the NWBConverter."""
 from pathlib import Path
 from typing import Union
-import datetime
+from datetime import datetime
 from zoneinfo import ZoneInfo
 import os
 from neuroconv.utils import load_dict_from_file, dict_deep_update
+from dateutil import parser
 
 from clandinin_lab_to_nwb.brezovec import BrezovecNWBConverter
 
@@ -13,6 +14,41 @@ def find_items_in_directory(directory: str, prefix: str, suffix: str):
     for item in os.listdir(directory):
         if item.startswith(prefix) and item.endswith(suffix):
             return os.path.join(directory, item)
+
+
+def read_session_start_time_from_file(xml_file):
+    from xml.etree import ElementTree
+
+    date = None
+    first_timestamp = None
+
+    for event, elem in ElementTree.iterparse(xml_file, events=("start", "end")):
+        # Extract the date from PVScan
+        if date is None and elem.tag == "PVScan" and event == "end":
+            date_string = elem.attrib.get("date")
+            date = datetime.strptime(date_string, "%m/%d/%Y %H:%M:%S  %p")
+            elem.clear()
+
+        # Extract the time from Sequence
+        if first_timestamp is None and elem.tag == "Sequence" and event == "end":
+            sequence_time = elem.get("time")
+            first_timestamp = parser.parse(sequence_time)
+            elem.clear()
+
+        if date is not None and first_timestamp is not None:
+            break
+
+    combined_datetime = datetime(
+        date.year,
+        date.month,
+        date.day,
+        first_timestamp.hour,
+        first_timestamp.minute,
+        first_timestamp.second,
+        first_timestamp.microsecond,
+    )
+
+    return combined_datetime
 
 
 def session_to_nwb(
@@ -28,8 +64,6 @@ def session_to_nwb(
         output_dir_path = output_dir_path / "nwb_stub"
     output_dir_path.mkdir(parents=True, exist_ok=True)
 
-    # Parse date from session_id
-    parsed_date = datetime.datetime.strptime(session_id, "%Y%m%d")
     nwbfile_path = output_dir_path / f"{session_id}.nwb"
 
     source_data = dict()
@@ -56,6 +90,8 @@ def session_to_nwb(
     prefix = f"TSeries-"
     suffix = ""
     folder_path = find_items_in_directory(directory=directory, prefix=prefix, suffix=suffix)
+
+    xml_file_path = Path(folder_path) / f"{Path(folder_path).name}.xml"
 
     # Add Green Channel Functional Imaging
     source_data.update(dict(ImagingFunctionalGreen=dict(folder_path=str(folder_path), stream_name="Green")))
@@ -87,17 +123,20 @@ def session_to_nwb(
 
     converter = BrezovecNWBConverter(source_data=source_data)
 
-    # Add datetime to conversion
     metadata = converter.get_metadata()
-    tzinfo = ZoneInfo("America/Los_Angeles")  # Time zone for Stanford, California
-    date = parsed_date.replace(tzinfo=tzinfo)
-    metadata["NWBFile"]["session_start_time"] = date
-    metadata["Subject"]["subject_id"] = subject_id
 
     # Update default metadata with the editable in the corresponding yaml file
     editable_metadata_path = Path(__file__).parent / "brezovec_metadata.yaml"
     editable_metadata = load_dict_from_file(editable_metadata_path)
     metadata = dict_deep_update(metadata, editable_metadata)
+
+    # Add datetime to conversion
+    session_start_datetime = read_session_start_time_from_file(xml_file_path)
+    timezone = ZoneInfo("America/Los_Angeles")  # Time zone for Stanford, California
+    localized_date = session_start_datetime.replace(tzinfo=timezone)
+    metadata = dict_deep_update(
+        metadata, {"NWBFile": {"session_start_time": localized_date}, "Subject": {"subject_id": subject_id}}
+    )
 
     # Run conversion
     converter.run_conversion(
@@ -110,14 +149,14 @@ def session_to_nwb(
 
 if __name__ == "__main__":
     # Parameters for conversion
-    # root_path = Path("/media/amtra/Samsung_T5/CN_data/")
-    root_path = Path("/home/heberto/Clandinin-CN-data-share/")
+    root_path = Path("/media/amtra/Samsung_T5/CN_data/")
+    # root_path = Path("/home/heberto/Clandinin-CN-data-share/")
     data_dir_path = root_path / "brezovec_example_data"
     output_dir_path = root_path / "conversion_nwb"
     output_dir_path = Path.home() / "conversion_nwb"
     stub_test = True
-    session_id = "20200228"
-    subject_id = "fly3"
+    session_id = "20200620"
+    subject_id = "fly2"
 
     session_to_nwb(
         data_dir_path=data_dir_path,

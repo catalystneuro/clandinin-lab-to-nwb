@@ -9,11 +9,13 @@ from pathlib import Path
 from types import ModuleType
 from typing import Optional, Tuple, Union, List, Dict
 from xml.etree import ElementTree
+from dateutil import parser
 
 import numpy as np
 from roiextractors.imagingextractor import ImagingExtractor
 from roiextractors.extraction_tools import PathType, get_package, DtypeType
 from neuroconv.utils import calculate_regular_series_rate
+from datetime import datetime
 
 
 def _get_nifti_reader() -> ModuleType:
@@ -47,6 +49,44 @@ def get_channels_from_first_frame(xml_file):
             elem.clear()
 
     return file_attributes_list
+
+
+def read_session_date_from_file(folder_path: PathType):
+    from xml.etree import ElementTree
+
+    folder_path = Path(folder_path)
+    xml_file = folder_path / f"{folder_path.name}.xml"
+    assert xml_file.is_file(), f"The XML configuration file is not found at '{folder_path}'."
+
+    date = None
+    first_timestamp = None
+    for event, elem in ElementTree.iterparse(xml_file, events=("start", "end")):
+        # Extract the date from PVScan
+        if date is None and elem.tag == "PVScan" and event == "end":
+            date_string = elem.attrib.get("date")
+            date = datetime.strptime(date_string, "%m/%d/%Y %H:%M:%S  %p")
+            elem.clear()
+
+        # Extract the time from Sequence
+        if first_timestamp is None and elem.tag == "Sequence" and event == "end":
+            sequence_time = elem.get("time")
+            first_timestamp = parser.parse(sequence_time)
+            elem.clear()
+
+        if date is not None and first_timestamp is not None:
+            break
+
+    combined_datetime = datetime(
+        date.year,
+        date.month,
+        date.day,
+        first_timestamp.hour,
+        first_timestamp.minute,
+        first_timestamp.second,
+        first_timestamp.microsecond,
+    )
+
+    return combined_datetime
 
 
 def _parse_xml(folder_path: PathType) -> ElementTree.Element:
@@ -182,9 +222,15 @@ class BrezovecMultiPlaneImagingExtractor(ImagingExtractor):
 
     def get_timestamps(self) -> np.ndarray:
         frame_elements = self._xml_root.findall(".//Frame")
-        absolute_times = [float(frame.attrib["absoluteTime"]) for frame in frame_elements]
+        absolute_times = [
+            float(frame.attrib["absoluteTime"]) for frame in frame_elements
+        ]  # TODO should we use absoluteTime or relativeTime?
         timestamps = [absolute_times[t] for t in np.arange(0, len(absolute_times), self._num_planes_per_channel_stream)]
         return np.array(timestamps)
+
+    def get_series_datetime(self):
+        series_datetime = read_session_date_from_file(folder_path=self.folder_path)
+        return series_datetime
 
     # Since we define one TwoPhotonSeries per channel, here it should return the name of the single channel
     def get_channel_names(self) -> list:
