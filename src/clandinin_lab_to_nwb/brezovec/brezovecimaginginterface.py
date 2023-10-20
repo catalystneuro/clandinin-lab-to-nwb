@@ -49,10 +49,10 @@ class BrezovecFunctionalGreenImagingInterface(BaseImagingExtractorInterface):
         # )
 
         device_name = "BrukerFluorescenceMicroscope"
-        description = f"Version {xml_metadata['version']}"
         metadata["Ophys"]["Device"][0].update(
             name=device_name,
-            description=description,
+            description=f"Bruker Ultima IV, Version {xml_metadata['version']}",
+            manufacturer="Bruker"
         )
 
         imaging_plane_name = "ImagingPlaneGCaMP6fFunctional"
@@ -144,10 +144,10 @@ class BrezovecFunctionalRedImagingInterface(BaseImagingExtractorInterface):
         # )
 
         device_name = "BrukerFluorescenceMicroscope"
-        description = f"Version {xml_metadata['version']}"
         metadata["Ophys"]["Device"][0].update(
             name=device_name,
-            description=description,
+            description=f"Bruker Ultima IV, Version {xml_metadata['version']}",
+            manufacturer="Bruker"
         )
 
         imaging_plane_name = "ImagingPlaneTdTomatoFunctional"
@@ -237,10 +237,10 @@ class BrezovecAnatomicalGreenImagingInterface(BaseImagingExtractorInterface):
         # )
 
         device_name = "BrukerFluorescenceMicroscope"
-        description = f"Version {xml_metadata['version']}"
         metadata["Ophys"]["Device"][0].update(
             name=device_name,
-            description=description,
+            description=f"Bruker Ultima IV, Version {xml_metadata['version']}",
+            manufacturer="Bruker"
         )
 
         imaging_plane_name = "ImagingPlaneGCaMP6fAnatomical"
@@ -331,10 +331,10 @@ class BrezovecAnatomicalRedImagingInterface(BaseImagingExtractorInterface):
         # )
 
         device_name = "BrukerFluorescenceMicroscope"
-        description = f"Version {xml_metadata['version']}"
         metadata["Ophys"]["Device"][0].update(
             name=device_name,
-            description=description,
+            description=f"Bruker Ultima IV, Version {xml_metadata['version']}",
+            manufacturer="Bruker"
         )
 
         imaging_plane_name = "ImagingPlaneTdTomatoAnatomical"
