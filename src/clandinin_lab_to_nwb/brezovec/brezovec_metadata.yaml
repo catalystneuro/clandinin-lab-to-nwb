@@ -1,8 +1,10 @@
 NWBFile:
+  keywords: [keyword1, keyword2]
+  surgery: "Each fly was anesthetized on a chilled Peltier plate with a thermally coupled custom holder. Each immobilized fly was carefully fitted into a custom mount consisting of 3D-printed plastic and a custom cut steel shim to tightly nestle the head and thorax. To fix the fly to the mount, UV-curable glue was placed and cured on the dorsal region of the face between the eyes, and on the thorax. A saline solution was added to the dish for dissection (103 mM NaCl, 3 mM KCl, 5 mM TES, 1 mM NaH2PO4, 4 mM MgCl2, 1.5 mM CaCl2, 10 mM trehalose, 10 mM glucose, 7 mM sucrose, and 26 mM NaHCO3). Using a tungsten needle the posterior head cuticle was carefully cut and removed to reveal the whole brain (Figure S1). Dissection forceps were used to remove fat and trachea."
   related_publications:
     - https://doi.org/10.1101/2022.03.20.485047
   session_description:
-    A rich text description of the experiment. Can also just be the abstract of the publication.
+    We use volumetric two-photon imaging to map neural activity associated with walking across the entire brain of Drosophila. We detect locomotor signals in approximately 40% of the brain, identify a global signal associated with the transition from rest to walking, and define clustered neural signals selectively associated with changes in forward or angular velocity.
   institution: Stanford
   lab: Clandinin
   experimenter:
@@ -12,5 +14,7 @@ NWBFile:
     - Clandinin, Thomas
 Subject:
   species: Drosophila melanogaster
-  age: 3D/4D
+  age: P3D/P4D
   sex: "F"  # From the methods in the paper
+  genotype: "w+/w+;UAS-myr::tdTomato/UAS-GCaMP6f;nSyb-Gal4/+"
+  description: "Flies were raised on molasses medium at 25 °C with a 12/12-h light/dark cycle. Flies were housed in mixed male/female vials of 10-20 individuals. 3-4 days post-eclosion females were used for imaging."
