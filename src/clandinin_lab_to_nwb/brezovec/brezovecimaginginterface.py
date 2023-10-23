@@ -41,12 +41,12 @@ class BrezovecFunctionalGreenImagingInterface(BaseImagingExtractorInterface):
 
         xml_metadata = self.imaging_extractor.xml_metadata
 
-        # channel_name = 'Green'
-        # metadata["Ophys"]["OpticalChannel"][0].update(
-        #     name=channel_name,
-        #     emission_lambda=513.0,
-        #     description="Green channel of the microscope, 525/50 nm filter.",
-        # )
+        channel_name = "Green"
+        optical_channel_metadata = dict(
+            name=channel_name,
+            emission_lambda=513.0,
+            description="Green channel of the microscope, 525/50 nm filter.",
+        )
 
         device_name = "BrukerFluorescenceMicroscope"
         description = f"Version {xml_metadata['version']}"
@@ -59,7 +59,7 @@ class BrezovecFunctionalGreenImagingInterface(BaseImagingExtractorInterface):
         imaging_plane_metadata = metadata["Ophys"]["ImagingPlane"][0]
         imaging_plane_metadata.update(
             name=imaging_plane_name,
-            # optical_channel=channel_name,
+            optical_channel=[optical_channel_metadata],
             device=device_name,
             excitation_lambda=920.0,
             indicator="GCaMP6f",
@@ -136,12 +136,12 @@ class BrezovecFunctionalRedImagingInterface(BaseImagingExtractorInterface):
 
         xml_metadata = self.imaging_extractor.xml_metadata
 
-        # channel_name = 'Red'
-        # metadata["Ophys"]["OpticalChannel"][1].update(
-        #     name=channel_name,
-        #     emission_lambda=581.0,
-        #     description="Red channel of the microscope, 550/50 nm filter.",
-        # )
+        channel_name = "Red"
+        optical_channel_metadata = dict(
+            name=channel_name,
+            emission_lambda=581.0,
+            description="Red channel of the microscope, 550/50 nm filter.",
+        )
 
         device_name = "BrukerFluorescenceMicroscope"
         description = f"Version {xml_metadata['version']}"
@@ -154,7 +154,7 @@ class BrezovecFunctionalRedImagingInterface(BaseImagingExtractorInterface):
         imaging_plane_metadata = metadata["Ophys"]["ImagingPlane"][0]
         imaging_plane_metadata.update(
             name=imaging_plane_name,
-            # optical_channel=channel_name,
+            optical_channel=[optical_channel_metadata],
             device=device_name,
             excitation_lambda=920.0,
             indicator="tdTomato",
@@ -229,12 +229,12 @@ class BrezovecAnatomicalGreenImagingInterface(BaseImagingExtractorInterface):
 
         xml_metadata = self.imaging_extractor.xml_metadata
 
-        # channel_name = 'Green'
-        # metadata["Ophys"]["OpticalChannel"][0].update(
-        #     name=channel_name,
-        #     emission_lambda=513.0,
-        #     description="Green channel of the microscope, 525/50 nm filter.",
-        # )
+        channel_name = "Green"
+        optical_channel_metadata = dict(
+            name=channel_name,
+            emission_lambda=513.0,
+            description="Green channel of the microscope, 525/50 nm filter.",
+        )
 
         device_name = "BrukerFluorescenceMicroscope"
         description = f"Version {xml_metadata['version']}"
@@ -247,7 +247,7 @@ class BrezovecAnatomicalGreenImagingInterface(BaseImagingExtractorInterface):
         imaging_plane_metadata = metadata["Ophys"]["ImagingPlane"][0]
         imaging_plane_metadata.update(
             name=imaging_plane_name,
-            # optical_channel=channel_name,
+            optical_channel=[optical_channel_metadata],
             device=device_name,
             excitation_lambda=920.0,
             indicator="GCaMP6f",
@@ -323,12 +323,12 @@ class BrezovecAnatomicalRedImagingInterface(BaseImagingExtractorInterface):
 
         xml_metadata = self.imaging_extractor.xml_metadata
 
-        # channel_name = 'Red'
-        # metadata["Ophys"]["OpticalChannel"][1].update(
-        #     name=channel_name,
-        #     emission_lambda=581.0,
-        #     description="Red channel of the microscope, 550/50 nm filter.",
-        # )
+        channel_name = "Red"
+        optical_channel_metadata = dict(
+            name=channel_name,
+            emission_lambda=581.0,
+            description="Red channel of the microscope, 550/50 nm filter.",
+        )
 
         device_name = "BrukerFluorescenceMicroscope"
         description = f"Version {xml_metadata['version']}"
@@ -341,7 +341,7 @@ class BrezovecAnatomicalRedImagingInterface(BaseImagingExtractorInterface):
         imaging_plane_metadata = metadata["Ophys"]["ImagingPlane"][0]
         imaging_plane_metadata.update(
             name=imaging_plane_name,
-            # optical_channel=channel_name,
+            optical_channel=[optical_channel_metadata],
             device=device_name,
             excitation_lambda=920.0,
             indicator="tdTomato",
