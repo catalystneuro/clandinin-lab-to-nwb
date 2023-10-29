@@ -74,7 +74,9 @@ def session_to_nwb(
     prefix = f"fictrac-{session_id}"
     suffix = ".dat"
     file_path = find_items_in_directory(directory=directory, prefix=prefix, suffix=suffix)
-    source_data.update(dict(FicTrac=dict(file_path=str(file_path))))
+    diameter_mm = 9.0  # From the Brezovec paper
+    diameter_meters = diameter_mm / 1000.0
+    source_data.update(dict(FicTrac=dict(file_path=str(file_path), radius=diameter_meters / 2)))
 
     # Video
     suffix = "-raw.avi"
@@ -148,16 +150,17 @@ def session_to_nwb(
 
 
 if __name__ == "__main__":
-    # Parameters for conversion
-    root_path = Path("/media/amtra/Samsung_T5/CN_data/")
-    # root_path = Path("/home/heberto/Clandinin-CN-data-share/")
+    from pathlib import Path
+    from clandinin_lab_to_nwb.brezovec.brezovec_convert_session import session_to_nwb
+
+    root_path = Path.home() / "Clandinin-CN-data-share"  # Change this to the directory where the data is stored
     data_dir_path = root_path / "brezovec_example_data"
-    output_dir_path = root_path / "conversion_nwb"
     output_dir_path = Path.home() / "conversion_nwb"
-    stub_test = True
+    stub_test = True  # Set to False to convert the full session
     session_id = "20200620"
     subject_id = "fly2"
 
+    # Note this assumes that the files are arranged in the same way as in the example data
     session_to_nwb(
         data_dir_path=data_dir_path,
         output_dir_path=output_dir_path,

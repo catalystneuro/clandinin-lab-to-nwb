@@ -34,14 +34,10 @@ This is the one that was used in the experiment according to personal communicat
 [Old file organization](https://github.com/ClandininLab/brainsss2/blob/main/file_organization.md)
 
 ##  Pending questions
-* What about the rest of the subjects / sessions? We don't have them, they provide another two in the last conversion.
-* What about the video files? They are provided. Both the original and debugging.
-* What about the fictrac header? They might provided. After investigation this is not as critical as it does not contain a lot of metadata but we built in the
-machinery to read it in the data interface in neuroconv anyway.
 * Why are the bruker files not in tiff format?
-* What are the json files in the imports directory?
-* Are the nifti files pre-processed in some way (are we getting the motion corrected ones?) or are they raw? They are raw.
-* Confirm that the ANT algorithm is only applied at the population level and not at the session one. Yes, this is the most likely scenario so far.
+* Are the nifti files pre-processed in some way (are we getting the motion corrected ones?) or are they raw? Answer: They are raw.
+* Confirm that the ANT algorithm is only applied at the population level and not at the session one.
+* Synchronization data missing. Waiting for response from the authors.
 
 ## General notes
 

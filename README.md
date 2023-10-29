@@ -71,9 +71,11 @@ Each conversion is organized in a directory of its own in the `src` directory:
         ├── clandinin_lab_to_nwb
         │   ├── conversion_directory_1
         │   └── brezovec
-        │       ├── brezovecbehaviorinterface.py
+        │       ├── brezove_convert_all_sessions.py
         │       ├── brezovec_convert_session.py
         │       ├── brezovec_metadata.yml
+        │       ├── brezovecimagingextractor.py
+        │       ├── brezovecimagininterface.py
         │       ├── brezovecnwbconverter.py
         │       ├── brezovec_requirements.txt
         │       ├── brezovec_notes.md
@@ -85,11 +87,11 @@ Each conversion is organized in a directory of its own in the `src` directory:
 
  For example, for the conversion `brezovec` you can find a directory located in `src/clandinin-lab-to-nwb/brezovec`. Inside each conversion directory you can find the following files:
 
+* `brezove_convert_all_sessions.py`: convert all the sessions.
 * `brezovec_convert_sesion.py`: this script defines the function to convert one full session of the conversion.
 * `brezovec_requirements.txt`: dependencies specific to this conversion.
 * `brezovec_metadata.yml`: metadata in yaml format for this specific conversion.
-* `brezovecbehaviorinterface.py`: the behavior interface. Usually ad-hoc for each conversion.
 * `brezovecnwbconverter.py`: the place where the `NWBConverter` class is defined.
 * `brezovec_notes.md`: notes and comments concerning this specific conversion.
-
-The directory might contain other files that are necessary for the conversion but those are the central ones.
+* `brezovecimagingextractor.py`: contains an ad-hoc imaging extractor for this conversion. This is a Bruker extractor adapted to read data from the NiFTI files used in this conversion.
+* `brezovecimagininterface.py`: the corresponding interface for the imaging extractor.
