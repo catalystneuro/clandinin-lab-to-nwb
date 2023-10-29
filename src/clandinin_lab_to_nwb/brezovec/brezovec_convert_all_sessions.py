@@ -1,21 +1,15 @@
-from clandinin_lab_to_nwb.brezovec.brezovec_convert_session import session_to_nwb
-
-# TODO: iterate over all session
-
-# strat with:
 from pathlib import Path
-from typing import Dict
+from clandinin_lab_to_nwb.brezovec.brezovec_convert_session import session_to_nwb
 
 from neuroconv.tools.path_expansion import LocalPathExpander
 
 # Define rooth path and data directory
-root_path = Path("/media/amtra/Samsung_T5/CN_data/")
-# root_path = Path("/home/heberto/Clandinin-CN-data-share/")
+root_path = Path.home() / "Clandinin-CN-data-share"  # Change this to the directory where the data is stored
 data_dir_path = root_path / "brezovec_example_data"
-output_dir_path = root_path / "conversion_nwb"
-stub_test = True
+output_dir_path = Path.home() / "conversion_nwb"
+stub_test = False  # Set to False to convert the full session otherwise only a stub will be converted for testing
 
-# Specify source data
+# Specify source data (note this assumes the files are arranged in the same way as in the example data)
 source_data_spec = {
     "imaging_function": {
         "base_directory": data_dir_path / "imports",
