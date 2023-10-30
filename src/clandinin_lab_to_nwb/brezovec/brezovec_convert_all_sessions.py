@@ -8,6 +8,7 @@ root_path = Path.home() / "Clandinin-CN-data-share"  # Change this to the direct
 data_dir_path = root_path / "brezovec_example_data"
 output_dir_path = Path.home() / "conversion_nwb"
 stub_test = False  # Set to False to convert the full session otherwise only a stub will be converted for testing
+verbose = True
 
 # Specify source data (note this assumes the files are arranged in the same way as in the example data)
 source_data_spec = {
@@ -31,4 +32,5 @@ for metadata in metadata_list:
         subject_id=metadata["metadata"]["Subject"]["subject_id"],
         session_id=metadata["metadata"]["NWBFile"]["session_id"],
         stub_test=stub_test,
+        verbose=verbose,
     )
