@@ -1,10 +1,3 @@
-"""Specialized extractor for reading NIfTI files produced via Bruker System.
-
-Classes
--------
-ScanImageTiffImagingExtractor
-    Specialized extractor for reading NIfTI files produced via Bruker System.
-"""
 from pathlib import Path
 from types import ModuleType
 from typing import Optional, Tuple, Union, List, Dict
