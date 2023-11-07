@@ -320,3 +320,56 @@ Here you write:
 [Update values](https://github.com/rjdmoore/fictrac/blob/9ac055e52d89f49f492a8eb4e1f7c5b8cd6df40a/src/Trackball.cpp#L872-L899)
 
 It seems this is not used in the code base `c2a_t`.
+
+
+fly-001/
+ func/
+   raw/ # formerly labeled "imaging", contains raw imaging data
+    fly-001_acq-func_ind-tdTomato_scan-001.nii -> TwoPhotonSeries
+    fly-001_acq-func_ind-GCaMP7_scan-001.nii -> TwoPhotonSeries
+
+
+   fictrac/ # directory for fictrac outputs
+    fly-001_acq-func_scan-001_fictrac.dat
+    fly-001_acq-func_scan-001_fictrac.log -> list of SpatialSeries
+    fly-001_acq-func_scan-001_fictrac.xml
+
+   visual/
+    fly-001_acq-func_scan-001_visual.h5 -> TimeSeries in Stimuli?
+     fly-001_acq-func_scan-001_photodiode.h5 -> TimeSeries in Stimuli?
+     fly-001_acq-func_scan-001_photodiode.csv -> TimeSeries in Stimuli?
+
+# Current abridged file organization
+    fly-001/
+    ├── func/
+    │   ├── raw/
+    │   │   ├── fly-001_acq-func_ind-tdTomato_scan-001.nii
+    │   │   └── fly-001_acq-func_ind-GCaMP7_scan-001.nii
+    │   ├── fictrac/
+    │   │   ├── fly-001_acq-func_scan-001_fictrac.dat
+    │   │   ├── fly-001_acq-func_scan-001_fictrac.log
+    │   │   └── fly-001_acq-func_scan-001_fictrac.xml
+    │   └── visual/
+    │       ├── fly-001_acq-func_scan-001_visual.h5
+    │       ├── fly-001_acq-func_scan-001_photodiode.h5
+    │       └── fly-001_acq-func_scan-001_photodiode.csv
+
+
+# Possible (abridged) nwb file organization
+
+    NWBFile
+    │
+    ├── subject: (Metadata about the fly)
+    │
+    ├── acquisition:
+    │   ├── TwoPhotonSeriestdtTomato (for tdTomato)
+    │   └── TwoPhotonSeriesGCaMP7 (for GCaMP7)
+    │
+    ├── processing_module: (Behavioral data)
+    │   ├── FicTrac:
+    │       └── SpatialSeriesAnimalHeading:
+    │       └── SpatialSeriesPosition:
+    │       └── SpatialSeriesMovementSpeed:
+    └── stimulus: (Stimulus presentation data)
+        ├── TimeSeriesVisual: (For visual.h5)
+        ├── TimeSeriesPhotoDiode: (For photodiode.h5)

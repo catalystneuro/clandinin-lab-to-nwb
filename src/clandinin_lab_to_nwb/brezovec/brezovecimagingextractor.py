@@ -107,8 +107,60 @@ def _get_xml_file_path(folder_path: PathType) -> Path:
     return xml_file_path
 
 
-class BrezovecMultiPlaneImagingExtractor(ImagingExtractor):
-    """Specialized extractor Brezovec conversion project: reading NIfTI files produced by Bruker system."""
+class NIfTIImagingExtractor(ImagingExtractor):
+    def __init__(
+        self, file_path: PathType, sampling_frequency: Optional[float] = None, channel_name: Optional[str] = None
+    ):
+        self._niftifile = _get_nifti_reader()
+        self.nibabel_image = self._niftifile.load(file_path)
+        self._num_rows = self.nibabel_image.shape[1]
+        self._num_columns = self.nibabel_image.shape[0]
+        self._num_planes = self.nibabel_image.shape[2]
+        self._num_frames = self.nibabel_image.shape[-1]
+        self._sampling_frequency = sampling_frequency
+        self._times = None
+        self.channel_name = channel_name if channel_name is not None else "no_name"
+
+    def get_video(
+        self, start_frame: Optional[int] = None, end_frame: Optional[int] = None, channel: int = 0
+    ) -> np.ndarray:
+        """
+        The nifti format is:
+        (x - columns - width, y - rows - heigth, z, t)
+        which we transform to the roiextractors convention:
+        (t, y - rows, x - columns, z)
+        """
+        if start_frame is not None and end_frame is not None and start_frame == end_frame:
+            return self.nibabel_image.dataobj[:, :, :, start_frame].transpose(1, 0, 2)
+
+        end_frame = end_frame or self.get_num_frames()
+        start_frame = start_frame or 0
+
+        return self.nibabel_image.dataobj[:, :, :, start_frame:end_frame].transpose(3, 1, 0, 2)
+
+    def get_image_size(self) -> Tuple[int, int, int]:
+        return (self._num_rows, self._num_columns, self._num_planes)
+
+    def get_num_frames(self) -> int:
+        return self._num_frames
+
+    def get_dtype(self) -> DtypeType:
+        return self.nibabel_image.get_data_dtype()
+
+    def get_sampling_frequency(self) -> float:
+        return self._sampling_frequency
+
+    # Since we define one TwoPhotonSeries per channel, here it should return the name of the single channel
+    def get_channel_names(self) -> list:
+        # return self._channel_names
+        return [self.channel_name]
+
+    def get_num_channels(self) -> int:
+        return 1  # len(self.get_channel_names())
+
+
+class BrezovecMultiPlaneImagingExtractor(NIfTIImagingExtractor):
+    """Specialized extractor Brezovec conversion project: reading NIfTI files based on data produced by Bruker system."""
 
     extractor_name = "BrezovecMultiPlaneImaging"
     is_writable = True
@@ -171,40 +223,24 @@ class BrezovecMultiPlaneImagingExtractor(ImagingExtractor):
             stream_name in self._channel_names
         ), f"The selected stream '{stream_name}' is not in the available channel stream '{self._channel_names}'!"
 
-        file_names = list(folder_path.glob("*.nii"))
+        nifti_files_in_folder = list(folder_path.glob("*.nii"))
 
         channel_id = streams["channel_streams"][stream_name]
-        file_for_stream = [file.as_posix() for file in file_names if "channel_" + channel_id in file.as_posix()]
-        self.nibabel_image = self._niftifile.load(file_for_stream[0])
+        file_path = next((path for path in nifti_files_in_folder if "channel_" + channel_id in path.name), None)
+        if file_path is None:
+            raise FileNotFoundError(f"Could not find file {file_path} for stream '{stream_name}'!")
 
-        self._num_rows = self.nibabel_image.shape[1]
-        self._num_columns = self.nibabel_image.shape[0]
-        self._num_planes_per_channel_stream = self.nibabel_image.shape[2]
+        # Sampling frequency is calculate from `calculate_regular_series_rate` which in turn
+        # Requires num_planes which requires initialization of the parent class to get the nifti_image
+        # TODO: Decouple the `calculate_regular_series_rate` from the `num_planes` attribute.
+        super().__init__(file_path, sampling_frequency=None, channel_name=stream_name)
 
-        self._num_frames = self.nibabel_image.shape[-1]
-
-        sampling_frequency = self.get_sampling_frequency()
+        sampling_frequency = calculate_regular_series_rate(self.get_timestamps())
         assert sampling_frequency is not None, "Could not determine the frame rate from the XML file."
         self._sampling_frequency = sampling_frequency
 
         self._times = None
         self.xml_metadata = self._get_xml_metadata()
-
-    def get_image_size(self) -> Tuple[int, int, int]:
-        return (self._num_rows, self._num_columns, self._num_planes_per_channel_stream)
-
-    def get_num_frames(self) -> int:
-        return self._num_frames
-
-    def get_dtype(self) -> DtypeType:
-        return self.nibabel_image.get_data_dtype()
-
-    def get_sampling_frequency(self) -> float:
-        """
-        Determines the sampling rate from the difference in absolute timestamps of the first frame elements of each cycle or sequence element.
-        """
-        sampling_frequency = calculate_regular_series_rate(self.get_timestamps())
-        return sampling_frequency
 
     def get_plane_acquisition_rate(self, cycle) -> float:
         """
@@ -212,11 +248,7 @@ class BrezovecMultiPlaneImagingExtractor(ImagingExtractor):
         """
         timestamps = self.get_timestamps()
         plane_acquisition_rate = calculate_regular_series_rate(
-            np.array(
-                timestamps[
-                    self._num_planes_per_channel_stream * (cycle - 1) : self._num_planes_per_channel_stream * cycle
-                ]
-            )
+            np.array(timestamps[self._num_planes * (cycle - 1) : self._num_planes * cycle])
         )
         return plane_acquisition_rate
 
@@ -225,7 +257,7 @@ class BrezovecMultiPlaneImagingExtractor(ImagingExtractor):
         absolute_times = [
             float(frame.attrib["absoluteTime"]) for frame in frame_elements
         ]  # TODO should we use absoluteTime or relativeTime?
-        timestamps = [absolute_times[t] for t in np.arange(0, len(absolute_times), self._num_planes_per_channel_stream)]
+        timestamps = [absolute_times[t] for t in np.arange(0, len(absolute_times), self._num_planes)]
         return np.array(timestamps)
 
     def get_series_datetime(self):
@@ -239,23 +271,6 @@ class BrezovecMultiPlaneImagingExtractor(ImagingExtractor):
 
     def get_num_channels(self) -> int:
         return 1  # len(self.get_channel_names())
-
-    def get_video(
-        self, start_frame: Optional[int] = None, end_frame: Optional[int] = None, channel: int = 0
-    ) -> np.ndarray:
-        """
-        The nifti format is:
-        (x - columns - width, y - rows - heigth, z, t)
-        which we transform to the roiextractors convention:
-        (t, y - rows, x - columns, z)
-        """
-        if start_frame is not None and end_frame is not None and start_frame == end_frame:
-            return self.nibabel_image.dataobj[:, :, :, start_frame].transpose(1, 0, 2)
-
-        end_frame = end_frame or self.get_num_frames()
-        start_frame = start_frame or 0
-
-        return self.nibabel_image.dataobj[:, :, :, start_frame:end_frame].transpose(3, 1, 0, 2)
 
     def _get_xml_metadata(self) -> Dict[str, Union[str, List[Dict[str, str]]]]:
         """
