@@ -4,6 +4,8 @@ from typing import Union
 from datetime import datetime
 from zoneinfo import ZoneInfo
 import os
+import itertools
+
 from neuroconv.utils import load_dict_from_file, dict_deep_update
 from dateutil import parser
 
@@ -89,38 +91,25 @@ def session_to_nwb(
     source_data.update(dict(Video=dict(file_paths=file_paths)))
     conversion_options.update(dict(Video=dict(stub_test=stub_test)))
 
-    # Select correct folder for Functional Imaging
-    directory = data_dir_path / "imports" / session_id / subject_id / "func_0"
-    prefix = f"TSeries-"
-    suffix = ""
-    folder_path = find_items_in_directory(directory=directory, prefix=prefix, suffix=suffix)
+    # Determine the correct directories and add Functional and Anatomical Imaging data
+    photon_series_index = 0
+    for imaging_type, channel in itertools.product(["func_0", "anat_0"], ["Green", "Red"]):
+        directory = data_dir_path / "imports" / session_id / subject_id / imaging_type
+        folder_path = find_items_in_directory(directory=directory, prefix="TSeries-", suffix="")
+        xml_file_path = Path(folder_path) / f"{Path(folder_path).name}.xml"
 
-    xml_file_path = Path(folder_path) / f"{Path(folder_path).name}.xml"
-
-    # Add Green Channel Functional Imaging
-    source_data.update(dict(ImagingFunctionalGreen=dict(folder_path=str(folder_path), stream_name="Green")))
-    conversion_options.update(dict(ImagingFunctionalGreen=dict(stub_test=stub_test, photon_series_index=0)))
-
-    # Add Red Channel Functional Imaging
-    source_data.update(dict(ImagingFunctionalRed=dict(folder_path=str(folder_path), stream_name="Red")))
-    conversion_options.update(dict(ImagingFunctionalRed=dict(stub_test=stub_test, photon_series_index=1)))
-
-    # Select correct folder for Anatomical Imaging
-    directory = data_dir_path / "imports" / session_id / subject_id / "anat_0"
-    folder_path = find_items_in_directory(directory=directory, prefix=prefix, suffix=suffix)
-
-    # Add Green Channel Anatomical Imaging
-    source_data.update(dict(ImagingAnatomicalGreen=dict(folder_path=str(folder_path), stream_name="Green")))
-    conversion_options.update(dict(ImagingAnatomicalGreen=dict(stub_test=stub_test, photon_series_index=2)))
-
-    # Add Red Channel Anatomical Imaging
-    source_data.update(dict(ImagingAnatomicalRed=dict(folder_path=str(folder_path), stream_name="Red")))
-    conversion_options.update(dict(ImagingAnatomicalRed=dict(stub_test=stub_test, photon_series_index=3)))
-
-    stub_frames = 10 if stub_test else None
-    if stub_frames:
-        for key in conversion_options:
-            conversion_options[key]["stub_frames"] = stub_frames
+        imaging_purpose = "Functional" if "func" in imaging_type else "Anatomical"
+        interface_name = f"Imaging{imaging_purpose}{channel}"
+        source_data[interface_name] = {
+            "folder_path": str(folder_path),
+            "channel": channel,
+            "imaging_purpose": imaging_purpose,
+        }
+        conversion_options[interface_name] = {"stub_test": stub_test, "photon_series_index": photon_series_index}
+        if stub_test:
+            stub_frames = 5
+            conversion_options[interface_name]["stub_frames"] = stub_frames
+        photon_series_index += 1
 
     converter = BrezovecNWBConverter(source_data=source_data, verbose=verbose)
 

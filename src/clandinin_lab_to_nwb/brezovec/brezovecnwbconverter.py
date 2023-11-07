@@ -1,5 +1,8 @@
 """Primary NWBConverter class for this dataset."""
-from typing import Dict, List, Optional, Union
+from typing import Optional
+from neuroconv.utils.dict import DeepDict
+from datetime import datetime
+from zoneinfo import ZoneInfo
 
 from pynwb import NWBFile
 
@@ -8,12 +11,43 @@ from neuroconv.datainterfaces import (
     FicTracDataInterface,
     VideoInterface,
 )
-from .brezovecimaginginterface import (
-    BrezovecFunctionalGreenImagingInterface,
-    BrezovecFunctionalRedImagingInterface,
-    BrezovecAnatomicalGreenImagingInterface,
-    BrezovecAnatomicalRedImagingInterface,
-)
+from .brezovecimaginginterface import BrezovecImagingInterface
+
+
+def read_session_start_time_from_file(xml_file):
+    from xml.etree import ElementTree
+    from dateutil import parser
+
+    date = None
+    first_timestamp = None
+
+    for event, elem in ElementTree.iterparse(xml_file, events=("start", "end")):
+        # Extract the date from PVScan
+        if date is None and elem.tag == "PVScan" and event == "end":
+            date_string = elem.attrib.get("date")
+            date = datetime.strptime(date_string, "%m/%d/%Y %H:%M:%S  %p")
+            elem.clear()
+
+        # Extract the time from Sequence
+        if first_timestamp is None and elem.tag == "Sequence" and event == "end":
+            sequence_time = elem.get("time")
+            first_timestamp = parser.parse(sequence_time)
+            elem.clear()
+
+        if date is not None and first_timestamp is not None:
+            break
+
+    combined_datetime = datetime(
+        date.year,
+        date.month,
+        date.day,
+        first_timestamp.hour,
+        first_timestamp.minute,
+        first_timestamp.second,
+        first_timestamp.microsecond,
+    )
+
+    return combined_datetime
 
 
 class BrezovecNWBConverter(NWBConverter):
@@ -21,10 +55,10 @@ class BrezovecNWBConverter(NWBConverter):
 
     data_interface_classes = dict(
         FicTrac=FicTracDataInterface,
-        ImagingFunctionalGreen=BrezovecFunctionalGreenImagingInterface,
-        ImagingFunctionalRed=BrezovecFunctionalRedImagingInterface,
-        ImagingAnatomicalGreen=BrezovecAnatomicalGreenImagingInterface,
-        ImagingAnatomicalRed=BrezovecAnatomicalRedImagingInterface,
+        ImagingFunctionalGreen=BrezovecImagingInterface,
+        ImagingFunctionalRed=BrezovecImagingInterface,
+        ImagingAnatomicalGreen=BrezovecImagingInterface,
+        ImagingAnatomicalRed=BrezovecImagingInterface,
         Video=VideoInterface,
     )
 
@@ -61,7 +95,9 @@ class BrezovecNWBConverter(NWBConverter):
         from pynwb.device import Device
 
         name = "Flea FL3-U3-13E4M-C"
-        description = "Sensor used for imaging at 50 Hz with Edmund Optics 100 mm C Series Fixed Focal Length Lens"
+        description = (
+            "Sensor used for imaging with FicTrac at 50 Hz with Edmund Optics 100 mm C Series Fixed Focal Length Lens"
+        )
         manufacturer = "Teledyne FLIR Systems, Inc."
         camera_device = Device(name, description=description, manufacturer=manufacturer)
 
