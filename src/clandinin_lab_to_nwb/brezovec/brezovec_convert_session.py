@@ -106,18 +106,10 @@ def session_to_nwb(
             "imaging_purpose": imaging_purpose,
         }
         conversion_options[interface_name] = {"stub_test": stub_test, "photon_series_index": photon_series_index}
+        if stub_test:
+            stub_frames = 5
+            conversion_options[interface_name]["stub_frames"] = stub_frames
         photon_series_index += 1
-
-    stub_frames = 5 if stub_test else None
-    if stub_frames:
-        interfaces_with_stub_frames = (
-            "ImagingFunctionalGreen",
-            "ImagingFunctionalRed",
-            "ImagingAnatomicalGreen",
-            "ImagingAnatomicalRed",
-        )
-        for interface in interfaces_with_stub_frames:
-            conversion_options[interface]["stub_frames"] = stub_frames
 
     converter = BrezovecNWBConverter(source_data=source_data, verbose=verbose)
 
