@@ -1,8 +1,9 @@
 """Primary NWBConverter class for this dataset."""
 from typing import Optional
+from pathlib import Path
 from neuroconv.utils.dict import DeepDict
-from datetime import datetime
 from zoneinfo import ZoneInfo
+import numpy as np
 
 from pynwb import NWBFile
 
@@ -12,42 +13,6 @@ from neuroconv.datainterfaces import (
     VideoInterface,
 )
 from .brezovecimaginginterface import BrezovecImagingInterface
-
-
-def read_session_start_time_from_file(xml_file):
-    from xml.etree import ElementTree
-    from dateutil import parser
-
-    date = None
-    first_timestamp = None
-
-    for event, elem in ElementTree.iterparse(xml_file, events=("start", "end")):
-        # Extract the date from PVScan
-        if date is None and elem.tag == "PVScan" and event == "end":
-            date_string = elem.attrib.get("date")
-            date = datetime.strptime(date_string, "%m/%d/%Y %H:%M:%S  %p")
-            elem.clear()
-
-        # Extract the time from Sequence
-        if first_timestamp is None and elem.tag == "Sequence" and event == "end":
-            sequence_time = elem.get("time")
-            first_timestamp = parser.parse(sequence_time)
-            elem.clear()
-
-        if date is not None and first_timestamp is not None:
-            break
-
-    combined_datetime = datetime(
-        date.year,
-        date.month,
-        date.day,
-        first_timestamp.hour,
-        first_timestamp.minute,
-        first_timestamp.second,
-        first_timestamp.microsecond,
-    )
-
-    return combined_datetime
 
 
 class BrezovecNWBConverter(NWBConverter):
@@ -61,6 +26,20 @@ class BrezovecNWBConverter(NWBConverter):
         ImagingAnatomicalRed=BrezovecImagingInterface,
         Video=VideoInterface,
     )
+
+    def get_metadata(self) -> DeepDict:
+        metadata = super().get_metadata()
+
+        # Add datetime to conversion from the Functional Green imaging data
+        folder_path = self.data_interface_objects["ImagingFunctionalGreen"].folder_path
+        xml_file_path = Path(folder_path) / f"{Path(folder_path).name}.xml"
+
+        functional_imaging_datetime = BrezovecImagingInterface.read_session_start_time_from_file(xml_file_path)
+        timezone = ZoneInfo("America/Los_Angeles")  # Time zone for Stanford, California
+        session_start_time = functional_imaging_datetime.replace(tzinfo=timezone)
+        metadata["NWBFile"]["session_start_time"] = session_start_time
+
+        return super().get_metadata()
 
     def temporally_align_data_interfaces(self):
         functional_green_interface = self.data_interface_objects["ImagingFunctionalGreen"]

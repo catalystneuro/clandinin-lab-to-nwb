@@ -1,5 +1,7 @@
 from dateutil.parser import parse
 from clandinin_lab_to_nwb.brezovec.brezovecimagingextractor import BrezovecMultiPlaneImagingExtractor
+from pathlib import Path
+from datetime import datetime
 
 from neuroconv.datainterfaces.ophys.baseimagingextractorinterface import BaseImagingExtractorInterface
 from neuroconv.utils import FolderPathType
@@ -28,6 +30,7 @@ class BrezovecImagingInterface(BaseImagingExtractorInterface):
         )
         self.channel = channel
         self.imaging_purpose = imaging_purpose
+        self.folder_path = folder_path
 
     @classmethod
     def get_streams(cls, folder_path) -> dict:
@@ -68,7 +71,7 @@ class BrezovecImagingInterface(BaseImagingExtractorInterface):
             name=imaging_plane_name,
             optical_channel=[optical_channel_metadata],
             device=device_name,
-            excitation_lambda=920.0,
+            excitation_lambda=920.0,  #   Chameleon Vision II femtosecond laser (Coherent) at 920 nm.
             indicator=indicator,
             imaging_rate=self.imaging_extractor.get_sampling_frequency(),
         )
@@ -79,28 +82,29 @@ class BrezovecImagingInterface(BaseImagingExtractorInterface):
             imaging_plane=imaging_plane_name,
             scan_line_rate=1 / float(xml_metadata["scanLinePeriod"]),
             rate=self.imaging_extractor.get_sampling_frequency(),
-            description=f"{self.imaging_purpose} imaging data ({indicator}) acquired from the Bruker Two-Photon Microscope",
-            unit="px",
+            description=f"{self.imaging_purpose} imaging data ({indicator})",
+            unit="n.a.",
         )
 
         microns_per_pixel = xml_metadata["micronsPerPixel"]
         if microns_per_pixel:
-            image_size_in_pixels = self.imaging_extractor.get_image_size()
-            x_position_in_meters = float(microns_per_pixel[0]["XAxis"]) / 1e6
-            y_position_in_meters = float(microns_per_pixel[1]["YAxis"]) / 1e6
-            z_plane_position_in_meters = float(microns_per_pixel[2]["ZAxis"]) / 1e6
-            grid_spacing = [y_position_in_meters, x_position_in_meters, z_plane_position_in_meters]
+            pixel_size_in_meters_x = float(microns_per_pixel[0]["XAxis"]) / 1e6
+            pixel_size_in_meters_y = float(microns_per_pixel[1]["YAxis"]) / 1e6
+            pixel_size_in_meters_z = float(microns_per_pixel[2]["ZAxis"]) / 1e6
+            grid_spacing = [pixel_size_in_meters_y, pixel_size_in_meters_x, pixel_size_in_meters_z]
 
-            imaging_plane_metadata.update(grid_spacing=grid_spacing)
+            imaging_plane_metadata.update(grid_spacing=grid_spacing, grid_spacing_units="meters")
+
+            image_size_in_pixels = self.imaging_extractor.get_image_size()
 
             field_of_view = [
-                y_position_in_meters * image_size_in_pixels[1],
-                x_position_in_meters * image_size_in_pixels[0],
-                z_plane_position_in_meters * image_size_in_pixels[2],
+                pixel_size_in_meters_y * image_size_in_pixels[1],
+                pixel_size_in_meters_x * image_size_in_pixels[0],
+                pixel_size_in_meters_z * image_size_in_pixels[2],
             ]
 
             two_photon_series_metadata.update(
-                field_of_view=field_of_view, dimension=image_size_in_pixels, resolution=x_position_in_meters
+                field_of_view=field_of_view, dimension=image_size_in_pixels, resolution=pixel_size_in_meters_x
             )
 
         return metadata
@@ -111,3 +115,47 @@ class BrezovecImagingInterface(BaseImagingExtractorInterface):
         "TwoPhotonSeriesAnatomicalGreen": 2,
         "TwoPhotonSeriesAnatomicalRed": 3,
     }
+
+    def get_series_datetime(self):
+        folder_path = Path(self.folder_path)
+        xml_file_path = folder_path / f"{folder_path.name}.xml"
+        assert xml_file_path.is_file(), f"The XML configuration file is not found at '{folder_path}'."
+
+        series_datetime = self.read_session_start_time_from_file(xml_file_path)
+        return series_datetime
+
+    @staticmethod
+    def read_session_start_time_from_file(xml_file_path):
+        from xml.etree import ElementTree
+        from dateutil import parser
+
+        date = None
+        first_timestamp = None
+
+        for event, elem in ElementTree.iterparse(xml_file_path, events=("start", "end")):
+            # Extract the date from PVScan
+            if date is None and elem.tag == "PVScan" and event == "end":
+                date_string = elem.attrib.get("date")
+                date = datetime.strptime(date_string, "%m/%d/%Y %H:%M:%S  %p")
+                elem.clear()
+
+            # Extract the time from Sequence
+            if first_timestamp is None and elem.tag == "Sequence" and event == "end":
+                sequence_time = elem.get("time")
+                first_timestamp = parser.parse(sequence_time)
+                elem.clear()
+
+            if date is not None and first_timestamp is not None:
+                break
+
+        combined_datetime = datetime(
+            date.year,
+            date.month,
+            date.day,
+            first_timestamp.hour,
+            first_timestamp.minute,
+            first_timestamp.second,
+            first_timestamp.microsecond,
+        )
+
+        return combined_datetime
