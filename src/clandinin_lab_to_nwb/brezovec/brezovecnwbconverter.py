@@ -42,32 +42,29 @@ class BrezovecNWBConverter(NWBConverter):
         return super().get_metadata()
 
     def temporally_align_data_interfaces(self):
-        fictrac_interface = self.data_interface_objects["FicTrac"]
-        video_interface = self.data_interface_objects["Video"]
         functional_green_interface = self.data_interface_objects["ImagingFunctionalGreen"]
         functional_red_interface = self.data_interface_objects["ImagingFunctionalRed"]
         anatomical_green_interface = self.data_interface_objects["ImagingAnatomicalGreen"]
         anatomical_red_interface = self.data_interface_objects["ImagingAnatomicalRed"]
 
-        # As the authors we create a timestamps for the FicTrac as if they have uniform sampling rate
-        sampling_rate = 50  # Hz
-        num_samples = fictrac_interface.get_original_timestamps().size
-        duration = num_samples / sampling_rate
+        session_start_time = functional_green_interface.imaging_extractor.get_series_datetime()
+        UTC_session_start_time = session_start_time.timestamp()
+        aligned_starting_time = 0.0
+        functional_green_interface.set_aligned_starting_time(aligned_starting_time)
 
-        unifom_timestamps = np.linspace(0, duration, num_samples, endpoint=False)
+        series_start_time = functional_red_interface.imaging_extractor.get_series_datetime()
+        UTC_series_start_time = series_start_time.timestamp()
+        aligned_starting_time = UTC_series_start_time - UTC_session_start_time
+        functional_red_interface.set_aligned_starting_time(aligned_starting_time)
 
-        fictrac_interface.set_aligned_timestamps(unifom_timestamps)
-        video_interface.set_aligned_timestamps([unifom_timestamps])
-
-        # The functional imaging is already aligned but we need to shift the anatomical imaging
-        # Note that both channels start at the same time
-        functional_datetime = functional_green_interface.get_series_datetime()
-        functional_timestamp = functional_datetime.timestamp()
-
-        anatomy_datetime = anatomical_green_interface.get_series_datetime()
-        anatomy_timestamp = anatomy_datetime.timestamp()
-        aligned_starting_time = anatomy_timestamp - functional_timestamp
+        series_start_time = anatomical_green_interface.imaging_extractor.get_series_datetime()
+        UTC_series_start_time = series_start_time.timestamp()
+        aligned_starting_time = UTC_series_start_time - UTC_session_start_time
         anatomical_green_interface.set_aligned_starting_time(aligned_starting_time)
+
+        series_start_time = anatomical_red_interface.imaging_extractor.get_series_datetime()
+        UTC_series_start_time = series_start_time.timestamp()
+        aligned_starting_time = UTC_series_start_time - UTC_session_start_time
         anatomical_red_interface.set_aligned_starting_time(aligned_starting_time)
 
     def add_to_nwbfile(self, nwbfile: NWBFile, metadata, conversion_options: Optional[dict] = None) -> None:
