@@ -1,18 +1,11 @@
 from pathlib import Path
-from types import ModuleType
 from typing import Optional, Tuple, Union, List, Dict
 from xml.etree import ElementTree
-from dateutil import parser
 
 import numpy as np
 from roiextractors.imagingextractor import ImagingExtractor
-from roiextractors.extraction_tools import PathType, get_package, DtypeType
+from roiextractors.extraction_tools import PathType, DtypeType
 from neuroconv.utils import calculate_regular_series_rate
-from datetime import datetime
-
-
-def _get_nifti_reader() -> ModuleType:
-    return get_package(package_name="nibabel", installation_instructions="pip install nibabel")
 
 
 def get_channels_from_first_frame(xml_file):
@@ -44,44 +37,6 @@ def get_channels_from_first_frame(xml_file):
     return file_attributes_list
 
 
-def read_session_date_from_file(folder_path: PathType):
-    from xml.etree import ElementTree
-
-    folder_path = Path(folder_path)
-    xml_file = folder_path / f"{folder_path.name}.xml"
-    assert xml_file.is_file(), f"The XML configuration file is not found at '{folder_path}'."
-
-    date = None
-    first_timestamp = None
-    for event, elem in ElementTree.iterparse(xml_file, events=("start", "end")):
-        # Extract the date from PVScan
-        if date is None and elem.tag == "PVScan" and event == "end":
-            date_string = elem.attrib.get("date")
-            date = datetime.strptime(date_string, "%m/%d/%Y %H:%M:%S  %p")
-            elem.clear()
-
-        # Extract the time from Sequence
-        if first_timestamp is None and elem.tag == "Sequence" and event == "end":
-            sequence_time = elem.get("time")
-            first_timestamp = parser.parse(sequence_time)
-            elem.clear()
-
-        if date is not None and first_timestamp is not None:
-            break
-
-    combined_datetime = datetime(
-        date.year,
-        date.month,
-        date.day,
-        first_timestamp.hour,
-        first_timestamp.minute,
-        first_timestamp.second,
-        first_timestamp.microsecond,
-    )
-
-    return combined_datetime
-
-
 def _parse_xml(folder_path: PathType) -> ElementTree.Element:
     """
     Parses the XML configuration file into element tree and returns the root Element.
@@ -104,8 +59,10 @@ class NIfTIImagingExtractor(ImagingExtractor):
     def __init__(
         self, file_path: PathType, sampling_frequency: Optional[float] = None, channel_name: Optional[str] = None
     ):
-        self._niftifile = _get_nifti_reader()
-        self.nibabel_image = self._niftifile.load(file_path)
+        import nibabel as nib
+
+        self.file_path = Path(file_path)
+        self.nibabel_image = nib.load(str(self.file_path.resolve()))
         self._num_rows = self.nibabel_image.shape[1]
         self._num_columns = self.nibabel_image.shape[0]
         self._num_planes = self.nibabel_image.shape[2]
@@ -149,11 +106,12 @@ class NIfTIImagingExtractor(ImagingExtractor):
         return [self.channel_name]
 
     def get_num_channels(self) -> int:
-        return 1  # len(self.get_channel_names())
+        return 1
 
 
 class BrezovecMultiPlaneImagingExtractor(NIfTIImagingExtractor):
-    """Specialized extractor Brezovec conversion project: reading NIfTI files based on data produced by Bruker system."""
+    """Specialized extractor for the Brezovec conversion project.
+    Reads NIfTI files based and uses metadata from the Bruker system xml files."""
 
     extractor_name = "BrezovecMultiPlaneImaging"
     is_writable = True
@@ -194,7 +152,6 @@ class BrezovecMultiPlaneImagingExtractor(NIfTIImagingExtractor):
         stream_name: str, optional
             The name of the recording channel.
         """
-        self._niftifile = _get_nifti_reader()
 
         folder_path = Path(folder_path)
         nii_file_paths = list(folder_path.glob("*.nii"))
@@ -247,15 +204,12 @@ class BrezovecMultiPlaneImagingExtractor(NIfTIImagingExtractor):
 
     def get_timestamps(self) -> np.ndarray:
         frame_elements = self._xml_root.findall(".//Frame")
-        absolute_times = [
-            float(frame.attrib["absoluteTime"]) for frame in frame_elements
-        ]  # TODO should we use absoluteTime or relativeTime?
-        timestamps = [absolute_times[t] for t in np.arange(0, len(absolute_times), self._num_planes)]
-        return np.array(timestamps)
-
-    def get_series_datetime(self):
-        series_datetime = read_session_date_from_file(folder_path=self.folder_path)
-        return series_datetime
+        relative_times = [
+            float(frame.attrib["relativeTime"]) for frame in frame_elements
+        ]  # We use relative time as that is what the authors do in their code
+        # see https://github.com/lukebrez/bigbadbrain/blob/548f08eb7a6a1ea3365da00c0015d455bfcd932e/bigbadbrain/utils.py#L122-L129
+        timestamps = [relative_times[t] for t in np.arange(0, len(relative_times), self._num_planes)]
+        return np.asarray(timestamps)
 
     # Since we define one TwoPhotonSeries per channel, here it should return the name of the single channel
     def get_channel_names(self) -> list:

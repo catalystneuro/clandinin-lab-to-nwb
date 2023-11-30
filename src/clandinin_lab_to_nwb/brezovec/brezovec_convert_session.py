@@ -1,13 +1,10 @@
 """Primary script to run to convert an entire session for of data using the NWBConverter."""
 from pathlib import Path
 from typing import Union
-from datetime import datetime
-from zoneinfo import ZoneInfo
 import os
 import itertools
 
 from neuroconv.utils import load_dict_from_file, dict_deep_update
-from dateutil import parser
 
 from clandinin_lab_to_nwb.brezovec import BrezovecNWBConverter
 
@@ -16,41 +13,6 @@ def find_items_in_directory(directory: str, prefix: str, suffix: str):
     for item in os.listdir(directory):
         if item.startswith(prefix) and item.endswith(suffix):
             return os.path.join(directory, item)
-
-
-def read_session_start_time_from_file(xml_file):
-    from xml.etree import ElementTree
-
-    date = None
-    first_timestamp = None
-
-    for event, elem in ElementTree.iterparse(xml_file, events=("start", "end")):
-        # Extract the date from PVScan
-        if date is None and elem.tag == "PVScan" and event == "end":
-            date_string = elem.attrib.get("date")
-            date = datetime.strptime(date_string, "%m/%d/%Y %H:%M:%S  %p")
-            elem.clear()
-
-        # Extract the time from Sequence
-        if first_timestamp is None and elem.tag == "Sequence" and event == "end":
-            sequence_time = elem.get("time")
-            first_timestamp = parser.parse(sequence_time)
-            elem.clear()
-
-        if date is not None and first_timestamp is not None:
-            break
-
-    combined_datetime = datetime(
-        date.year,
-        date.month,
-        date.day,
-        first_timestamp.hour,
-        first_timestamp.minute,
-        first_timestamp.second,
-        first_timestamp.microsecond,
-    )
-
-    return combined_datetime
 
 
 def session_to_nwb(
@@ -96,7 +58,6 @@ def session_to_nwb(
     for imaging_type, channel in itertools.product(["func_0", "anat_0"], ["Green", "Red"]):
         directory = data_dir_path / "imports" / session_id / subject_id / imaging_type
         folder_path = find_items_in_directory(directory=directory, prefix="TSeries-", suffix="")
-        xml_file_path = Path(folder_path) / f"{Path(folder_path).name}.xml"
 
         imaging_purpose = "Functional" if "func" in imaging_type else "Anatomical"
         interface_name = f"Imaging{imaging_purpose}{channel}"
@@ -120,13 +81,8 @@ def session_to_nwb(
     editable_metadata = load_dict_from_file(editable_metadata_path)
     metadata = dict_deep_update(metadata, editable_metadata)
 
-    # Add datetime to conversion
-    session_start_datetime = read_session_start_time_from_file(xml_file_path)
-    timezone = ZoneInfo("America/Los_Angeles")  # Time zone for Stanford, California
-    localized_date = session_start_datetime.replace(tzinfo=timezone)
-    metadata = dict_deep_update(
-        metadata, {"NWBFile": {"session_start_time": localized_date}, "Subject": {"subject_id": subject_id}}
-    )
+    # Add the correct subject ID
+    metadata = dict_deep_update(metadata, {"Subject": {"subject_id": subject_id}})
 
     # Run conversion
     converter.run_conversion(
