@@ -83,7 +83,7 @@ class BrezovecImagingInterface(BaseImagingExtractorInterface):
             scan_line_rate=1 / float(xml_metadata["scanLinePeriod"]),
             rate=self.imaging_extractor.get_sampling_frequency(),
             description=f"{self.imaging_purpose} imaging data ({indicator})",
-            unit="n.a",
+            unit="n.a.",
         )
 
         microns_per_pixel = xml_metadata["micronsPerPixel"]
