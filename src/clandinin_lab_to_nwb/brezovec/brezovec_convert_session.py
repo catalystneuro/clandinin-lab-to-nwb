@@ -3,6 +3,7 @@ from pathlib import Path
 from typing import Union
 import itertools
 from zoneinfo import ZoneInfo
+from datetime import datetime
 
 from neuroconv.utils import load_dict_from_file, dict_deep_update
 
@@ -19,6 +20,7 @@ def session_to_nwb(
     verbose: bool = False,
 ):
     if verbose:
+        print("-" * 80)
         print(f"Converting session {session_id} for subject {subject_id}")
 
     data_dir_path = Path(data_dir_path)
@@ -31,7 +33,6 @@ def session_to_nwb(
 
     source_data = dict()
     conversion_options = dict()
-
     # Determine the correct directories and add Functional and Anatomical Imaging data
     photon_series_index = 0
     imaging_purpose_mapping = dict(func_0="Functional", anat_0="Anatomical")
@@ -57,15 +58,21 @@ def session_to_nwb(
     folder_path = source_data["ImagingFunctionalGreen"]["folder_path"]
     xml_file_path = Path(folder_path) / f"{Path(folder_path).name}.xml"
     functional_imaging_datetime = BrezovecImagingInterface.read_session_start_time_from_file(xml_file_path)
-    hours_minutes_string = functional_imaging_datetime.strftime("%H%M")
 
     # Add Fictrac
     fictrac_directory = data_dir_path / "fictrac"
     fictrac_files = (path for path in fictrac_directory.iterdir() if path.suffix == ".dat")
-    pattern = f"fictrac-{session_id}_{hours_minutes_string}"
-    fictrac_file_path = [path for path in fictrac_files if pattern in path.name]
-    assert len(fictrac_file_path) == 1, f"Expected to find a single FicTrac file with pattern {pattern}"
-    fictrac_file_path = fictrac_file_path[0]
+    pattern = f"fictrac-{session_id}"
+    # All of these files share the session_id
+    fictrac_file_path_list = [path for path in fictrac_files if pattern in path.name]
+    # The file names have a structure that is fictract-YYYYMMDDHHMMSS.dat
+    # So to get the closest file to the functional imaging we need to convert the datetime strings to datetime objects
+    # and then find the closest one
+    datetime_strings = [p.stem.replace("fictrac-", "").replace("_", "") for p in fictrac_file_path_list]
+    datetimes = [datetime.strptime(string, "%Y%m%d%H%M%S") for string in datetime_strings]
+    time_differences = [abs((x - functional_imaging_datetime).total_seconds()) for x in datetimes]
+    closest_index = time_differences.index(min(time_differences))
+    fictrac_file_path = fictrac_file_path_list[closest_index]
     diameter_mm = 9.0  # From the Brezovec paper
     diameter_meters = diameter_mm / 1000.0
     source_data.update(dict(FicTrac=dict(file_path=str(fictrac_file_path), radius=diameter_meters / 2)))
@@ -91,6 +98,18 @@ def session_to_nwb(
     metadata["NWBFile"]["session_start_time"] = session_start_time
     metadata["Subject"]["subject_id"] = subject_id
 
+    if verbose:
+        print("The session start time from the functional imaging data is:")
+        print(session_start_time)
+        print("Transforming the following file_path of fictrac data:")
+        print(fictrac_file_path.name)
+        print("And the following file_paths of video data:")
+        print(video_file_path.name)
+        print("And the following folder_paths of imaging data:")
+        for interface_name, interface_metadata in source_data.items():
+            if "Imaging" in interface_name:
+                print(f"{interface_name}: {interface_metadata['folder_path']}")
+
     # Run conversion
     converter.run_conversion(
         metadata=metadata,
@@ -110,8 +129,8 @@ if __name__ == "__main__":
     output_dir_path = Path.home() / "conversion_nwb"
     stub_test = True  # Set to False to convert the full session
     verbose = True
-    session_id = "20200620"
-    subject_id = "fly2"
+    session_id = "20200627"
+    subject_id = "fly_4"
 
     # Note this assumes that the files are arranged in the same way as in the example data
     session_to_nwb(
