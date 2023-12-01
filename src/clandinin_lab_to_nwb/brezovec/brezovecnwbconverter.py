@@ -27,20 +27,6 @@ class BrezovecNWBConverter(NWBConverter):
         Video=VideoInterface,
     )
 
-    def get_metadata(self) -> DeepDict:
-        metadata = super().get_metadata()
-
-        # Add datetime to conversion from the Functional Green imaging data
-        folder_path = self.data_interface_objects["ImagingFunctionalGreen"].folder_path
-        xml_file_path = Path(folder_path) / f"{Path(folder_path).name}.xml"
-
-        functional_imaging_datetime = BrezovecImagingInterface.read_session_start_time_from_file(xml_file_path)
-        timezone = ZoneInfo("America/Los_Angeles")  # Time zone for Stanford, California
-        session_start_time = functional_imaging_datetime.replace(tzinfo=timezone)
-        metadata["NWBFile"]["session_start_time"] = session_start_time
-
-        return super().get_metadata()
-
     def temporally_align_data_interfaces(self):
         fictrac_interface = self.data_interface_objects["FicTrac"]
         video_interface = self.data_interface_objects["Video"]
