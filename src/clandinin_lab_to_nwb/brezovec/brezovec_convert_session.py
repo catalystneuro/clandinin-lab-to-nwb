@@ -79,6 +79,13 @@ def session_to_nwb(
 
     # Use the datestring as a session id
     session_id = datetime_strings[closest_index]
+    # Get the subject id from the json mapping provided by the authors
+    json_file_path = Path(__file__).parent / "subject_mapping.json"
+    subject_mapping = load_dict_from_file(json_file_path)
+    subject_id_without_underscores = subject_id.replace("_", "")
+    fly = subject_mapping[date_string][subject_id_without_underscores]
+    subject_id = fly
+
     if verbose:
         print("-" * 80)
         print(f"Converting session {session_id} for subject {subject_id}")
@@ -111,7 +118,7 @@ def session_to_nwb(
                 print(f"{interface_name}: {Path(interface_metadata['folder_path']).name}")
 
     # Run conversion
-    nwbfile_path = output_dir_path / f"{session_id}.nwb"
+    nwbfile_path = output_dir_path / f"{subject_id}.nwb"
     converter.run_conversion(
         metadata=metadata,
         nwbfile_path=nwbfile_path,
@@ -130,7 +137,7 @@ if __name__ == "__main__":
     output_dir_path = Path.home() / "conversion_nwb"
     stub_test = True  # Set to False to convert the full session
     verbose = True
-    session_id = "20200627"
+    date_string = "20200627"
     subject_id = "fly_4"
 
     # Note this assumes that the files are arranged in the same way as in the example data
@@ -138,7 +145,7 @@ if __name__ == "__main__":
         data_dir_path=data_dir_path,
         output_dir_path=output_dir_path,
         stub_test=stub_test,
-        session_id=session_id,
+        date_string=date_string,
         subject_id=subject_id,
         verbose=verbose,
     )
