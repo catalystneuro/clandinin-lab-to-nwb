@@ -18,7 +18,7 @@ base_directory = data_dir_path
 source_data_spec = {
     "imaging": {
         "base_directory": base_directory,
-        "folder_path": "imports/{session_id}/{subject_id}",
+        "folder_path": "imports/{date_string}/{subject_id}",
     }
 }
 
@@ -27,25 +27,19 @@ path_expander = LocalPathExpander()
 
 # Expand paths and extract metadata
 metadata_list = path_expander.expand_paths(source_data_spec)
+# Filter over directories
+metadata_list = [m for m in metadata_list if Path(m["source_data"]["imaging"]["folder_path"]).is_dir()]
+# Filter over flies to get only the directories that contain both functional and anatomical imaging
+metadata_list = [m for m in metadata_list if "fly" in Path(m["source_data"]["imaging"]["folder_path"]).name]
 
-# Filter dor directories that exist and are named "fly" to get the metadata for each session
-metadata_list = [
-    metadata_match
-    for metadata_match in metadata_list
-    if Path(metadata_match["source_data"]["imaging"]["folder_path"]).is_dir()
-]
-metadata_list = [
-    metadata_match
-    for metadata_match in metadata_list
-    if "fly" in Path(metadata_match["source_data"]["imaging"]["folder_path"]).name
-]
-
-for metadata in metadata_list:
+for index, metadata in enumerate(metadata_list):
+    print(f"Converting session {index + 1} of {len(metadata_list)}")
+    date_string = metadata["metadata"]["extras"]["date_string"]
     session_to_nwb(
         data_dir_path=data_dir_path,
         output_dir_path=output_dir_path,
         subject_id=metadata["metadata"]["Subject"]["subject_id"],
-        session_id=metadata["metadata"]["NWBFile"]["session_id"],
+        date_string=date_string,
         stub_test=stub_test,
         verbose=verbose,
     )

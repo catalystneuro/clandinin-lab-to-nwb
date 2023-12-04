@@ -15,21 +15,15 @@ def session_to_nwb(
     data_dir_path: Union[str, Path],
     output_dir_path: Union[str, Path],
     subject_id: str,
-    session_id: str,
+    date_string: str,
     stub_test: bool = False,
     verbose: bool = False,
 ):
-    if verbose:
-        print("-" * 80)
-        print(f"Converting session {session_id} for subject {subject_id}")
-
     data_dir_path = Path(data_dir_path)
     output_dir_path = Path(output_dir_path)
     if stub_test:
         output_dir_path = output_dir_path / "nwb_stub"
     output_dir_path.mkdir(parents=True, exist_ok=True)
-
-    nwbfile_path = output_dir_path / f"{session_id}.nwb"
 
     source_data = dict()
     conversion_options = dict()
@@ -37,7 +31,7 @@ def session_to_nwb(
     photon_series_index = 0
     imaging_purpose_mapping = dict(func_0="Functional", anat_0="Anatomical")
     for imaging_type, channel in itertools.product(["func_0", "anat_0"], ["Green", "Red"]):
-        directory = data_dir_path / "imports" / session_id / subject_id / imaging_type
+        directory = data_dir_path / "imports" / date_string / subject_id / imaging_type
         imaging_folders_in_directory = (path for path in directory.iterdir() if path.is_dir())
         folder_path = next(path for path in imaging_folders_in_directory if "TSeries" in path.name)
 
@@ -62,8 +56,8 @@ def session_to_nwb(
     # Add Fictrac
     fictrac_directory = data_dir_path / "fictrac"
     fictrac_files = (path for path in fictrac_directory.iterdir() if path.suffix == ".dat")
-    pattern = f"fictrac-{session_id}"
-    # All of these files share the session_id
+    pattern = f"fictrac-{date_string}"
+    # All of these files share the date_string
     fictrac_file_path_list = [path for path in fictrac_files if pattern in path.name]
     # The file names have a structure that is fictract-YYYYMMDDHHMMSS.dat
     # So to get the closest file to the functional imaging we need to convert the datetime strings to datetime objects
@@ -83,8 +77,13 @@ def session_to_nwb(
     source_data.update(dict(Video=dict(file_paths=file_paths)))
     conversion_options.update(dict(Video=dict(stub_test=stub_test)))
 
-    converter = BrezovecNWBConverter(source_data=source_data, verbose=verbose)
+    # Use the datestring as a session id
+    session_id = datetime_strings[closest_index]
+    if verbose:
+        print("-" * 80)
+        print(f"Converting session {session_id} for subject {subject_id}")
 
+    converter = BrezovecNWBConverter(source_data=source_data, verbose=verbose)
     metadata = converter.get_metadata()
 
     # Update default metadata with the editable in the corresponding yaml file
@@ -97,6 +96,7 @@ def session_to_nwb(
     session_start_time = functional_imaging_datetime.replace(tzinfo=timezone)
     metadata["NWBFile"]["session_start_time"] = session_start_time
     metadata["Subject"]["subject_id"] = subject_id
+    metadata["NWBFile"]["session_id"] = session_id
 
     if verbose:
         print("The session start time from the functional imaging data is:")
@@ -108,9 +108,10 @@ def session_to_nwb(
         print("And the following folder_paths of imaging data:")
         for interface_name, interface_metadata in source_data.items():
             if "Imaging" in interface_name:
-                print(f"{interface_name}: {interface_metadata['folder_path']}")
+                print(f"{interface_name}: {Path(interface_metadata['folder_path']).name}")
 
     # Run conversion
+    nwbfile_path = output_dir_path / f"{session_id}.nwb"
     converter.run_conversion(
         metadata=metadata,
         nwbfile_path=nwbfile_path,
