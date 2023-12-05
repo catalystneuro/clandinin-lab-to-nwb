@@ -10,14 +10,12 @@ from neuroconv.utils import load_dict_from_file, dict_deep_update
 
 from clandinin_lab_to_nwb.brezovec import BrezovecNWBConverter
 from clandinin_lab_to_nwb.brezovec.brezovecimaginginterface import BrezovecImagingInterface
-from clandinin_lab_to_nwb.brezovec.brezovecimaginginterface import BrezovecImagingInterface
 
 
 def session_to_nwb(
     data_dir_path: Union[str, Path],
     output_dir_path: Union[str, Path],
     subject_id: str,
-    date_string: str,
     date_string: str,
     stub_test: bool = False,
     verbose: bool = False,
@@ -107,24 +105,6 @@ def session_to_nwb(
     editable_metadata = load_dict_from_file(editable_metadata_path)
     metadata = dict_deep_update(metadata, editable_metadata)
 
-    # Add the correct metadata for the session
-    timezone = ZoneInfo("America/Los_Angeles")  # Time zone for Stanford, California
-    session_start_time = functional_imaging_datetime.replace(tzinfo=timezone)
-    metadata["NWBFile"]["session_start_time"] = session_start_time
-    metadata["Subject"]["subject_id"] = subject_id
-    metadata["NWBFile"]["session_id"] = session_id
-
-    if verbose:
-        print("The session start time from the functional imaging data is:")
-        print(session_start_time)
-        print("Transforming the following file_path of fictrac data:")
-        print(fictrac_file_path.name)
-        print("And the following file_paths of video data:")
-        print(video_file_path.name)
-        print("And the following folder_paths of imaging data:")
-        for interface_name, interface_metadata in source_data.items():
-            if "Imaging" in interface_name:
-                print(f"{interface_name}: {Path(interface_metadata['folder_path']).name}")
     # Add the correct metadata for the session
     timezone = ZoneInfo("America/Los_Angeles")  # Time zone for Stanford, California
     session_start_time = functional_imaging_datetime.replace(tzinfo=timezone)
