@@ -10,12 +10,14 @@ from neuroconv.utils import load_dict_from_file, dict_deep_update
 
 from clandinin_lab_to_nwb.brezovec import BrezovecNWBConverter
 from clandinin_lab_to_nwb.brezovec.brezovecimaginginterface import BrezovecImagingInterface
+from clandinin_lab_to_nwb.brezovec.brezovecimaginginterface import BrezovecImagingInterface
 
 
 def session_to_nwb(
     data_dir_path: Union[str, Path],
     output_dir_path: Union[str, Path],
     subject_id: str,
+    date_string: str,
     date_string: str,
     stub_test: bool = False,
     verbose: bool = False,
@@ -32,11 +34,16 @@ def session_to_nwb(
     # Determine the correct directories and add Functional and Anatomical Imaging data
     photon_series_index = 0
     imaging_purpose_mapping = dict(func_0="Functional", anat_0="Anatomical")
+    imaging_purpose_mapping = dict(func_0="Functional", anat_0="Anatomical")
     for imaging_type, channel in itertools.product(["func_0", "anat_0"], ["Green", "Red"]):
         directory = data_dir_path / "imports" / date_string / subject_id / imaging_type
         imaging_folders_in_directory = (path for path in directory.iterdir() if path.is_dir())
         folder_path = next(path for path in imaging_folders_in_directory if "TSeries" in path.name)
+        directory = data_dir_path / "imports" / date_string / subject_id / imaging_type
+        imaging_folders_in_directory = (path for path in directory.iterdir() if path.is_dir())
+        folder_path = next(path for path in imaging_folders_in_directory if "TSeries" in path.name)
 
+        imaging_purpose = imaging_purpose_mapping[imaging_type]
         imaging_purpose = imaging_purpose_mapping[imaging_type]
         interface_name = f"Imaging{imaging_purpose}{channel}"
         source_data[interface_name] = {
@@ -118,6 +125,24 @@ def session_to_nwb(
         for interface_name, interface_metadata in source_data.items():
             if "Imaging" in interface_name:
                 print(f"{interface_name}: {Path(interface_metadata['folder_path']).name}")
+    # Add the correct metadata for the session
+    timezone = ZoneInfo("America/Los_Angeles")  # Time zone for Stanford, California
+    session_start_time = functional_imaging_datetime.replace(tzinfo=timezone)
+    metadata["NWBFile"]["session_start_time"] = session_start_time
+    metadata["Subject"]["subject_id"] = subject_id
+    metadata["NWBFile"]["session_id"] = session_id
+
+    if verbose:
+        print("The session start time from the functional imaging data is:")
+        print(session_start_time)
+        print("Transforming the following file_path of fictrac data:")
+        print(fictrac_file_path.name)
+        print("And the following file_paths of video data:")
+        print(video_file_path.name)
+        print("And the following folder_paths of imaging data:")
+        for interface_name, interface_metadata in source_data.items():
+            if "Imaging" in interface_name:
+                print(f"{interface_name}: {Path(interface_metadata['folder_path']).name}")
 
     # Run conversion
     nwbfile_path = output_dir_path / f"{subject_id}.nwb"
@@ -139,6 +164,7 @@ if __name__ == "__main__":
     from clandinin_lab_to_nwb.brezovec.brezovec_convert_session import session_to_nwb
 
     root_path = Path.home() / "Clandinin-CN-data-share"  # Change this to the directory where the data is stored
+    root_path = Path("/media/heberto/One Touch/Clandinin-CN-data-share")
     root_path = Path("/media/heberto/One Touch/Clandinin-CN-data-share")
     data_dir_path = root_path / "brezovec_example_data"
     output_dir_path = root_path / "conversion_nwb"
