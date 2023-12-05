@@ -5,6 +5,8 @@ NWBFile:
     - https://doi.org/10.1101/2022.03.20.485047
   session_description:
     We use volumetric two-photon imaging to map neural activity associated with walking across the entire brain of Drosophila. We detect locomotor signals in approximately 40% of the brain, identify a global signal associated with the transition from rest to walking, and define clustered neural signals selectively associated with changes in forward or angular velocity.
+  experiment_description:
+    We use volumetric two-photon imaging to map neural activity associated with walking across the entire brain of Drosophila. We detect locomotor signals in approximately 40% of the brain, identify a global signal associated with the transition from rest to walking, and define clustered neural signals selectively associated with changes in forward or angular velocity.
   institution: Stanford
   lab: Clandinin
   experimenter:
