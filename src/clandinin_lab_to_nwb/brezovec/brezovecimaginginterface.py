@@ -93,7 +93,7 @@ class BrezovecImagingInterface(BaseImagingExtractorInterface):
             pixel_size_in_meters_z = float(microns_per_pixel[2]["ZAxis"]) / 1e6
             grid_spacing = [pixel_size_in_meters_y, pixel_size_in_meters_x, pixel_size_in_meters_z]
 
-            imaging_plane_metadata.update(grid_spacing=grid_spacing, grid_spacing_units="meters")
+            imaging_plane_metadata.update(grid_spacing=grid_spacing, grid_spacing_unit="meters")
 
             image_size_in_pixels = self.imaging_extractor.get_image_size()
 
@@ -136,7 +136,7 @@ class BrezovecImagingInterface(BaseImagingExtractorInterface):
             # Extract the date from PVScan
             if date is None and elem.tag == "PVScan" and event == "end":
                 date_string = elem.attrib.get("date")
-                date = datetime.strptime(date_string, "%m/%d/%Y %H:%M:%S  %p")
+                date = datetime.strptime(date_string, "%m/%d/%Y %I:%M:%S %p")
                 elem.clear()
 
             # Extract the time from Sequence

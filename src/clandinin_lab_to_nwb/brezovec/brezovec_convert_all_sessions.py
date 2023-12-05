@@ -5,16 +5,20 @@ from neuroconv.tools.path_expansion import LocalPathExpander
 
 # Define rooth path and data directory
 root_path = Path.home() / "Clandinin-CN-data-share"  # Change this to the directory where the data is stored
+root_path = (
+    Path("/media/heberto/One Touch/") / "Clandinin-CN-data-share"
+)  # Change this to the directory where the data is stored
 data_dir_path = root_path / "brezovec_example_data"
 output_dir_path = Path.home() / "conversion_nwb"
-stub_test = False  # Set to False to convert the full session otherwise only a stub will be converted for testing
+stub_test = True  # Set to False to convert the full session otherwise only a stub will be converted for testing
 verbose = True
 
 # Specify source data (note this assumes the files are arranged in the same way as in the example data)
+base_directory = data_dir_path
 source_data_spec = {
-    "imaging_function": {
-        "base_directory": data_dir_path / "imports",
-        "folder_path": "{session_id}/{subject_id}/func_0/TSeries-{session_start_time:%m%d%Y}-{other}/TSeries-{session_start_time:%m%d%Y}-{other}.xml",
+    "imaging": {
+        "base_directory": base_directory,
+        "folder_path": "imports/{date_string}/{subject_id}",
     }
 }
 
@@ -23,14 +27,19 @@ path_expander = LocalPathExpander()
 
 # Expand paths and extract metadata
 metadata_list = path_expander.expand_paths(source_data_spec)
+# Filter over directories
+metadata_list = [m for m in metadata_list if Path(m["source_data"]["imaging"]["folder_path"]).is_dir()]
+# Filter over flies to get only the directories that contain both functional and anatomical imaging
+metadata_list = [m for m in metadata_list if "fly" in Path(m["source_data"]["imaging"]["folder_path"]).name]
 
-# Print the results
-for metadata in metadata_list:
+for index, metadata in enumerate(metadata_list):
+    print(f"Converting session {index + 1} of {len(metadata_list)}")
+    date_string = metadata["metadata"]["extras"]["date_string"]
     session_to_nwb(
         data_dir_path=data_dir_path,
         output_dir_path=output_dir_path,
         subject_id=metadata["metadata"]["Subject"]["subject_id"],
-        session_id=metadata["metadata"]["NWBFile"]["session_id"],
+        date_string=date_string,
         stub_test=stub_test,
         verbose=verbose,
     )
