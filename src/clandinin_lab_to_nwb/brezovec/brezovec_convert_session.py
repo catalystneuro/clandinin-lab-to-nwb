@@ -37,11 +37,7 @@ def session_to_nwb(
         directory = data_dir_path / "imports" / date_string / subject_id / imaging_type
         imaging_folders_in_directory = (path for path in directory.iterdir() if path.is_dir())
         folder_path = next(path for path in imaging_folders_in_directory if "TSeries" in path.name)
-        directory = data_dir_path / "imports" / date_string / subject_id / imaging_type
-        imaging_folders_in_directory = (path for path in directory.iterdir() if path.is_dir())
-        folder_path = next(path for path in imaging_folders_in_directory if "TSeries" in path.name)
 
-        imaging_purpose = imaging_purpose_mapping[imaging_type]
         imaging_purpose = imaging_purpose_mapping[imaging_type]
         interface_name = f"Imaging{imaging_purpose}{channel}"
         source_data[interface_name] = {
