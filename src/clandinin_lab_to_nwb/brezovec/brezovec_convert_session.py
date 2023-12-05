@@ -4,6 +4,7 @@ from typing import Union
 import itertools
 from zoneinfo import ZoneInfo
 from datetime import datetime
+import time
 
 from neuroconv.utils import load_dict_from_file, dict_deep_update
 
@@ -19,6 +20,7 @@ def session_to_nwb(
     stub_test: bool = False,
     verbose: bool = False,
 ):
+    start_time = time.time()
     data_dir_path = Path(data_dir_path)
     output_dir_path = Path(output_dir_path)
     if stub_test:
@@ -126,6 +128,11 @@ def session_to_nwb(
         overwrite=True,
     )
 
+    end_time = time.time()
+    if verbose:
+        conversion_time = end_time - start_time
+        print(f"Conversion took {conversion_time:.2f} seconds")
+
 
 if __name__ == "__main__":
     from pathlib import Path
@@ -134,8 +141,8 @@ if __name__ == "__main__":
     root_path = Path.home() / "Clandinin-CN-data-share"  # Change this to the directory where the data is stored
     root_path = Path("/media/heberto/One Touch/Clandinin-CN-data-share")
     data_dir_path = root_path / "brezovec_example_data"
-    output_dir_path = Path.home() / "conversion_nwb"
-    stub_test = True  # Set to False to convert the full session
+    output_dir_path = root_path / "conversion_nwb"
+    stub_test = False  # Set to False to convert the full session
     verbose = True
     date_string = "20200627"
     subject_id = "fly_4"
