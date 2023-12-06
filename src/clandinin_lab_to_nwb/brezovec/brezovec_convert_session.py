@@ -32,7 +32,6 @@ def session_to_nwb(
     # Determine the correct directories and add Functional and Anatomical Imaging data
     photon_series_index = 0
     imaging_purpose_mapping = dict(func_0="Functional", anat_0="Anatomical")
-    imaging_purpose_mapping = dict(func_0="Functional", anat_0="Anatomical")
     for imaging_type, channel in itertools.product(["func_0", "anat_0"], ["Green", "Red"]):
         directory = data_dir_path / "imports" / date_string / subject_id / imaging_type
         imaging_folders_in_directory = (path for path in directory.iterdir() if path.is_dir())
@@ -132,7 +131,8 @@ def session_to_nwb(
     end_time = time.time()
     if verbose:
         conversion_time = end_time - start_time
-        print(f"Conversion took {conversion_time:.2f} seconds")
+        conversion_time_minutes = conversion_time / 60.0
+        print(f"Conversion took {conversion_time_minutes:.2f} minutes or {conversion_time:.2f} seconds")
 
 
 if __name__ == "__main__":
@@ -141,10 +141,9 @@ if __name__ == "__main__":
 
     root_path = Path.home() / "Clandinin-CN-data-share"  # Change this to the directory where the data is stored
     root_path = Path("/media/heberto/One Touch/Clandinin-CN-data-share")
-    root_path = Path("/media/heberto/One Touch/Clandinin-CN-data-share")
     data_dir_path = root_path / "brezovec_example_data"
     output_dir_path = root_path / "conversion_nwb"
-    stub_test = False  # Set to False to convert the full session
+    stub_test = True  # Set to False to convert the full session
     verbose = True
     date_string = "20200627"
     subject_id = "fly_4"

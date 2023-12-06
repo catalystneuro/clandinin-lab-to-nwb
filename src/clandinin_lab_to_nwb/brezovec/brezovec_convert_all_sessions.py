@@ -41,7 +41,6 @@ for index, metadata in enumerate(metadata_list):
         output_dir_path=output_dir_path,
         subject_id=subject_id,
         date_string=date_string,
-        date_string=date_string,
         stub_test=stub_test,
         verbose=verbose,
     )
