@@ -132,6 +132,8 @@ def session_to_nwb(
     if verbose:
         conversion_time = end_time - start_time
         conversion_time_minutes = conversion_time / 60.0
+        file_path_size_GiB = Path(nwbfile_path).stat().st_size / 1e9
+        print(f"Wrote {file_path_size_GiB} GiB to {nwbfile_path}")
         print(f"Conversion took {conversion_time_minutes:.2f} minutes or {conversion_time:.2f} seconds")
 
 
@@ -142,11 +144,11 @@ if __name__ == "__main__":
     root_path = Path.home() / "Clandinin-CN-data-share"  # Change this to the directory where the data is stored
     root_path = Path("/media/heberto/One Touch/Clandinin-CN-data-share")
     data_dir_path = root_path / "brezovec_example_data"
-    output_dir_path = root_path / "conversion_nwb"
+    output_dir_path = Path.home() / "conversion_nwb"
     stub_test = True  # Set to False to convert the full session
     verbose = True
-    date_string = "20200627"
-    subject_id = "fly_4"
+    date_string = "20200620"
+    subject_id = "fly2"
 
     # Note this assumes that the files are arranged in the same way as in the example data
     session_to_nwb(
