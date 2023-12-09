@@ -39,6 +39,7 @@ def session_to_nwb(
 
         imaging_purpose = imaging_purpose_mapping[imaging_type]
         interface_name = f"Imaging{imaging_purpose}{channel}"
+
         source_data[interface_name] = {
             "folder_path": str(folder_path),
             "channel": channel,
@@ -87,6 +88,19 @@ def session_to_nwb(
     subject_id_without_underscores = subject_id.replace("_", "")
     fly = subject_mapping[date_string][subject_id_without_underscores]
     subject_id = fly
+
+    # Add the processed data
+    folder_path = data_dir_path / "processed_dataset" / f"{subject_id}"
+    file_path = folder_path / "brain_zscored_green_high_pass_masked_warped_to_FDA.nii"
+    source_data.update(dict(Processed=dict(file_path=str(file_path))))
+    conversion_options["Processed"] = {
+        "parent_container": "processing/ophys",
+        "stub_test": stub_test,
+        "photon_series_index": 4,
+    }
+    if stub_test:
+        stub_frames = 5
+        conversion_options["Processed"]["stub_frames"] = stub_frames
 
     if verbose:
         print("-" * 80)

@@ -9,41 +9,30 @@ from datetime import datetime
 import numpy as np
 
 from neuroconv.datainterfaces.ophys.baseimagingextractorinterface import BaseImagingExtractorInterface
-from neuroconv.utils import FolderPathType
+from neuroconv.utils import FolderPathType, FilePathType
 from neuroconv.utils.dict import DeepDict
 from typing import Literal
 
 
 class NiftiImagingInterface(BaseImagingExtractorInterface):
-    extractor = NIfTIImagingExtractor
+    Extractor = NIfTIImagingExtractor
 
     def __init__(
         self,
-        folder_path: FolderPathType,
-        channel: str,
+        file_path: FilePathType,
         verbose: bool = True,
     ):
         super().__init__(
-            folder_path=folder_path,
-            stream_name=channel,
+            file_path=file_path,
             verbose=verbose,
         )
-        self.channel = channel
 
     def get_metadata(self):
         metadata = super().get_metadata()
 
-        nibabel_image = self.extractor.nibabel_image
+        nibabel_image = self.imaging_extractor.nibabel_image
         header = nibabel_image.header
         voxel_sizes = header.get_zooms()
-
-        metadata = super().get_metadata()
-        metadata["Ophys"]["TwoPhotonSeries"][0].update(
-            name=f"TwoPhotonSeries{self.channel}",
-            description=f"{self.channel} imaging data acquired from the Bruker Two-Photon Microscope",
-            unit="px",
-        )
-
         width, height, depth = self.imaging_extractor.get_image_size()
         num_frames = self.imaging_extractor.get_num_frames()
 
@@ -65,13 +54,13 @@ class NiftiImagingInterface(BaseImagingExtractorInterface):
             "description": "Green channel of the microscope, 525/50 nm filter.",
         }
 
-        version = ""
+        version = "5.5.64.100"  # Taken from the XML file
         device_name = "BrukerFluorescenceMicroscope"
         metadata["Ophys"]["Device"][0].update(
             name=device_name, description=f"Bruker Ultima IV, Version {version}", manufacturer="Bruker"
         )
 
-        imaging_plane_name = f"ImagingPlaneProcessedData"
+        imaging_plane_name = f"ImagingPlaneFunctionalGreenProcessed"
         imaging_plane_metadata = metadata["Ophys"]["ImagingPlane"][0]
         imaging_plane_metadata.update(
             name=imaging_plane_name,
@@ -79,25 +68,21 @@ class NiftiImagingInterface(BaseImagingExtractorInterface):
             device=device_name,
             excitation_lambda=920.0,  #   Chameleon Vision II femtosecond laser (Coherent) at 920 nm.
             indicator=indicator,
-            imaging_rate=self.imaging_extractor.get_sampling_frequency(),
+            grid_spacing=grid_spacing,
+            grid_spacing_unit=grid_spacing_unit,
+            origin_coords=origin_coords,
+            origin_coords_unit=origin_coords_unit,
+            location="whole brain",
         )
 
         description = "motion corrected high-pass temporal filtered z-scored and registered into a common space, the Functional Drosophila Atlas"
 
         two_photon_series_metadata = metadata["Ophys"]["TwoPhotonSeries"][0]
         two_photon_series_metadata.update(
-            name=f"TwoPhotonSeriesProcessedData",
+            name=f"TwoPhotonSeriesFunctionalGreenProcessed",
             imaging_plane=imaging_plane_name,
-            rate=self.imaging_extractor.get_sampling_frequency(),
             description=description,
             unit="n.a.",
-        )
-
-        imaging_plane_metadata.update(
-            grid_spacing=grid_spacing,
-            grid_spacing_unit=grid_spacing_unit,
-            origin_coords=origin_coords,
-            origin_coords_unit=origin_coords_unit,
         )
 
         return metadata
@@ -154,8 +139,9 @@ class BrezovecImagingInterface(BaseImagingExtractorInterface):
         optical_channel_metadata = channel_metadata
 
         device_name = "BrukerFluorescenceMicroscope"
+        version = xml_metadata["version"]
         metadata["Ophys"]["Device"][0].update(
-            name=device_name, description=f"Bruker Ultima IV, Version {xml_metadata['version']}", manufacturer="Bruker"
+            name=device_name, description=f"Bruker Ultima IV, Version {version}", manufacturer="Bruker"
         )
 
         indicator = indicators[self.channel]
@@ -168,6 +154,7 @@ class BrezovecImagingInterface(BaseImagingExtractorInterface):
             excitation_lambda=920.0,  #   Chameleon Vision II femtosecond laser (Coherent) at 920 nm.
             indicator=indicator,
             imaging_rate=self.imaging_extractor.get_sampling_frequency(),
+            location="whole brain",
         )
 
         two_photon_series_metadata = metadata["Ophys"]["TwoPhotonSeries"][0]
