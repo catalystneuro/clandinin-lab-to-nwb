@@ -156,10 +156,9 @@ if __name__ == "__main__":
     from clandinin_lab_to_nwb.brezovec.brezovec_convert_session import session_to_nwb
 
     root_path = Path.home() / "Clandinin-CN-data-share"  # Change this to the directory where the data is stored
-    root_path = Path("/media/heberto/One Touch/Clandinin-CN-data-share")
     data_dir_path = root_path / "brezovec_example_data"
     output_dir_path = Path.home() / "conversion_nwb"
-    stub_test = True  # Set to False to convert the full session
+    stub_test = False  # Set to False to convert the full session, otherwise only a stub will be converted for testing
     verbose = True
     date_string = "20200620"
     subject_id = "fly2"
