@@ -4,6 +4,7 @@ from typing import Union
 import itertools
 from zoneinfo import ZoneInfo
 from datetime import datetime
+import time
 
 from neuroconv.utils import load_dict_from_file, dict_deep_update
 
@@ -19,6 +20,7 @@ def session_to_nwb(
     stub_test: bool = False,
     verbose: bool = False,
 ):
+    start_time = time.time()
     data_dir_path = Path(data_dir_path)
     output_dir_path = Path(output_dir_path)
     if stub_test:
@@ -79,6 +81,13 @@ def session_to_nwb(
 
     # Use the datestring as a session id
     session_id = datetime_strings[closest_index]
+    # Get the subject id from the json mapping provided by the authors
+    json_file_path = Path(__file__).parent / "subject_mapping.json"
+    subject_mapping = load_dict_from_file(json_file_path)
+    subject_id_without_underscores = subject_id.replace("_", "")
+    fly = subject_mapping[date_string][subject_id_without_underscores]
+    subject_id = fly
+
     if verbose:
         print("-" * 80)
         print(f"Converting session {session_id} for subject {subject_id}")
@@ -111,13 +120,19 @@ def session_to_nwb(
                 print(f"{interface_name}: {Path(interface_metadata['folder_path']).name}")
 
     # Run conversion
-    nwbfile_path = output_dir_path / f"{session_id}.nwb"
+    nwbfile_path = output_dir_path / f"{subject_id}.nwb"
     converter.run_conversion(
         metadata=metadata,
         nwbfile_path=nwbfile_path,
         conversion_options=conversion_options,
         overwrite=True,
     )
+
+    end_time = time.time()
+    if verbose:
+        conversion_time = end_time - start_time
+        conversion_time_minutes = conversion_time / 60.0
+        print(f"Conversion took {conversion_time_minutes:.2f} minutes or {conversion_time:.2f} seconds")
 
 
 if __name__ == "__main__":
@@ -127,10 +142,10 @@ if __name__ == "__main__":
     root_path = Path.home() / "Clandinin-CN-data-share"  # Change this to the directory where the data is stored
     root_path = Path("/media/heberto/One Touch/Clandinin-CN-data-share")
     data_dir_path = root_path / "brezovec_example_data"
-    output_dir_path = Path.home() / "conversion_nwb"
+    output_dir_path = root_path / "conversion_nwb"
     stub_test = True  # Set to False to convert the full session
     verbose = True
-    session_id = "20200627"
+    date_string = "20200627"
     subject_id = "fly_4"
 
     # Note this assumes that the files are arranged in the same way as in the example data
@@ -138,7 +153,7 @@ if __name__ == "__main__":
         data_dir_path=data_dir_path,
         output_dir_path=output_dir_path,
         stub_test=stub_test,
-        session_id=session_id,
+        date_string=date_string,
         subject_id=subject_id,
         verbose=verbose,
     )
