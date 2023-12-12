@@ -12,7 +12,7 @@ from neuroconv.datainterfaces import (
     FicTracDataInterface,
     VideoInterface,
 )
-from .brezovecimaginginterface import BrezovecImagingInterface
+from .brezovecimaginginterface import BrezovecImagingInterface, NiftiImagingInterface
 
 
 class BrezovecNWBConverter(NWBConverter):
@@ -25,6 +25,7 @@ class BrezovecNWBConverter(NWBConverter):
         ImagingAnatomicalGreen=BrezovecImagingInterface,
         ImagingAnatomicalRed=BrezovecImagingInterface,
         Video=VideoInterface,
+        Processed=NiftiImagingInterface,
     )
 
     def temporally_align_data_interfaces(self):
@@ -56,7 +57,33 @@ class BrezovecNWBConverter(NWBConverter):
         anatomical_green_interface.set_aligned_starting_time(aligned_starting_time)
         anatomical_red_interface.set_aligned_starting_time(aligned_starting_time)
 
+    def get_metadata(self) -> DeepDict:
+        metadata = super().get_metadata()
+
+        # Update the sampling rate for the Processed data interface
+        # The sampling rate is the same for all the functional imaging Green
+
+        two_photon_series_metadat_list = metadata["Ophys"]["TwoPhotonSeries"]
+        name = "TwoPhotonSeriesFunctionalGreen"
+        two_photon_series_metadata = next(
+            metadata for metadata in two_photon_series_metadat_list if metadata["name"] == name
+        )
+        name = "TwoPhotonSeriesFunctionalGreenProcessed"
+        two_photon_series_processed_metadata = next(
+            metadata for metadata in two_photon_series_metadat_list if metadata["name"] == name
+        )
+
+        functional_sampling_rate = two_photon_series_metadata["rate"]
+        # Update the sampling rate for the Processed data interface
+        two_photon_series_processed_metadata["rate"] = functional_sampling_rate
+
+        return metadata
+
     def add_to_nwbfile(self, nwbfile: NWBFile, metadata, conversion_options: Optional[dict] = None) -> None:
+        # Modify the sampling rate of the processed data
+        sampling_frequency = self.data_interface_objects["ImagingFunctionalGreen"].imaging_extractor._sampling_frequency
+        self.data_interface_objects["Processed"].imaging_extractor._sampling_frequency = sampling_frequency
+
         super().add_to_nwbfile(nwbfile, metadata, conversion_options=conversion_options)
 
         # Add the camera

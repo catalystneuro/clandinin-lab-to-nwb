@@ -85,8 +85,9 @@ class NIfTIImagingExtractor(ImagingExtractor):
 
         end_frame = end_frame or self.get_num_frames()
         start_frame = start_frame or 0
-
-        return self.nibabel_image.dataobj[:, :, :, start_frame:end_frame].transpose(3, 1, 0, 2)
+        data_original_shape = self.nibabel_image.dataobj[:, :, :, start_frame:end_frame]
+        data_to_return = data_original_shape.transpose(3, 1, 0, 2)
+        return data_to_return
 
     def get_image_size(self) -> Tuple[int, int, int]:
         return (self._num_rows, self._num_columns, self._num_planes)

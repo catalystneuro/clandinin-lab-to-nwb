@@ -39,6 +39,7 @@ def session_to_nwb(
 
         imaging_purpose = imaging_purpose_mapping[imaging_type]
         interface_name = f"Imaging{imaging_purpose}{channel}"
+
         source_data[interface_name] = {
             "folder_path": str(folder_path),
             "channel": channel,
@@ -88,6 +89,19 @@ def session_to_nwb(
     fly = subject_mapping[date_string][subject_id_without_underscores]
     subject_id = fly
 
+    # Add the processed data
+    folder_path = data_dir_path / "processed_dataset" / f"{subject_id}"
+    file_path = folder_path / "brain_zscored_green_high_pass_masked_warped_to_FDA.nii"
+    source_data.update(dict(Processed=dict(file_path=str(file_path))))
+    conversion_options["Processed"] = {
+        "parent_container": "processing/ophys",
+        "stub_test": stub_test,
+        "photon_series_index": 4,
+    }
+    if stub_test:
+        stub_frames = 5
+        conversion_options["Processed"]["stub_frames"] = stub_frames
+
     if verbose:
         print("-" * 80)
         print(f"Converting session {session_id} for subject {subject_id}")
@@ -132,6 +146,8 @@ def session_to_nwb(
     if verbose:
         conversion_time = end_time - start_time
         conversion_time_minutes = conversion_time / 60.0
+        file_path_size_GiB = Path(nwbfile_path).stat().st_size / 1e9
+        print(f"Wrote {file_path_size_GiB} GiB to {nwbfile_path}")
         print(f"Conversion took {conversion_time_minutes:.2f} minutes or {conversion_time:.2f} seconds")
 
 
@@ -140,13 +156,12 @@ if __name__ == "__main__":
     from clandinin_lab_to_nwb.brezovec.brezovec_convert_session import session_to_nwb
 
     root_path = Path.home() / "Clandinin-CN-data-share"  # Change this to the directory where the data is stored
-    root_path = Path("/media/heberto/One Touch/Clandinin-CN-data-share")
     data_dir_path = root_path / "brezovec_example_data"
-    output_dir_path = root_path / "conversion_nwb"
-    stub_test = True  # Set to False to convert the full session
+    output_dir_path = Path.home() / "conversion_nwb"
+    stub_test = False  # Set to False to convert the full session, otherwise only a stub will be converted for testing
     verbose = True
-    date_string = "20200627"
-    subject_id = "fly_4"
+    date_string = "20200620"
+    subject_id = "fly2"
 
     # Note this assumes that the files are arranged in the same way as in the example data
     session_to_nwb(

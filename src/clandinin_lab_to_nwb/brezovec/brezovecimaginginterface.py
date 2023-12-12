@@ -1,12 +1,91 @@
 from dateutil.parser import parse
-from clandinin_lab_to_nwb.brezovec.brezovecimagingextractor import BrezovecMultiPlaneImagingExtractor
+from clandinin_lab_to_nwb.brezovec.brezovecimagingextractor import (
+    BrezovecMultiPlaneImagingExtractor,
+    NIfTIImagingExtractor,
+)
 from pathlib import Path
 from datetime import datetime
 
+import numpy as np
+
 from neuroconv.datainterfaces.ophys.baseimagingextractorinterface import BaseImagingExtractorInterface
-from neuroconv.utils import FolderPathType
+from neuroconv.utils import FolderPathType, FilePathType
 from neuroconv.utils.dict import DeepDict
 from typing import Literal
+
+
+class NiftiImagingInterface(BaseImagingExtractorInterface):
+    Extractor = NIfTIImagingExtractor
+
+    def __init__(
+        self,
+        file_path: FilePathType,
+        verbose: bool = True,
+    ):
+        super().__init__(
+            file_path=file_path,
+            verbose=verbose,
+        )
+
+    def get_metadata(self):
+        metadata = super().get_metadata()
+
+        nibabel_image = self.imaging_extractor.nibabel_image
+        header = nibabel_image.header
+        voxel_sizes = header.get_zooms()
+        width, height, depth = self.imaging_extractor.get_image_size()
+        num_frames = self.imaging_extractor.get_num_frames()
+
+        units = header.get_xyzt_units()
+        origin_coords_unit = units[0]
+        grid_spacing_unit = units[0]
+
+        affine_matrix = header.get_qform()
+        # Get diagonal of affine matrix
+        grid_spacing = np.diag(affine_matrix[:3, :3])[:]
+        origin_coords = affine_matrix[:3, 3]
+
+        # specific for this project
+
+        indicator = "GCaMP6f"
+        optical_channel_metadata = {
+            "name": "Green",
+            "emission_lambda": 513.0,
+            "description": "Green channel of the microscope, 525/50 nm filter.",
+        }
+
+        version = "5.5.64.100"  # Taken from the XML file
+        device_name = "BrukerFluorescenceMicroscope"
+        metadata["Ophys"]["Device"][0].update(
+            name=device_name, description=f"Bruker Ultima IV, Version {version}", manufacturer="Bruker"
+        )
+
+        imaging_plane_name = f"ImagingPlaneFunctionalGreenProcessed"
+        imaging_plane_metadata = metadata["Ophys"]["ImagingPlane"][0]
+        imaging_plane_metadata.update(
+            name=imaging_plane_name,
+            optical_channel=[optical_channel_metadata],
+            device=device_name,
+            excitation_lambda=920.0,  #   Chameleon Vision II femtosecond laser (Coherent) at 920 nm.
+            indicator=indicator,
+            grid_spacing=grid_spacing,
+            grid_spacing_unit=grid_spacing_unit,
+            origin_coords=origin_coords,
+            origin_coords_unit=origin_coords_unit,
+            location="whole brain",
+        )
+
+        description = "motion corrected high-pass temporal filtered z-scored and registered into a common space, the Functional Drosophila Atlas"
+
+        two_photon_series_metadata = metadata["Ophys"]["TwoPhotonSeries"][0]
+        two_photon_series_metadata.update(
+            name=f"TwoPhotonSeriesFunctionalGreenProcessed",
+            imaging_plane=imaging_plane_name,
+            description=description,
+            unit="n.a.",
+        )
+
+        return metadata
 
 
 class BrezovecImagingInterface(BaseImagingExtractorInterface):
@@ -60,8 +139,9 @@ class BrezovecImagingInterface(BaseImagingExtractorInterface):
         optical_channel_metadata = channel_metadata
 
         device_name = "BrukerFluorescenceMicroscope"
+        version = xml_metadata["version"]
         metadata["Ophys"]["Device"][0].update(
-            name=device_name, description=f"Bruker Ultima IV, Version {xml_metadata['version']}", manufacturer="Bruker"
+            name=device_name, description=f"Bruker Ultima IV, Version {version}", manufacturer="Bruker"
         )
 
         indicator = indicators[self.channel]
@@ -74,6 +154,7 @@ class BrezovecImagingInterface(BaseImagingExtractorInterface):
             excitation_lambda=920.0,  #   Chameleon Vision II femtosecond laser (Coherent) at 920 nm.
             indicator=indicator,
             imaging_rate=self.imaging_extractor.get_sampling_frequency(),
+            location="whole brain",
         )
 
         two_photon_series_metadata = metadata["Ophys"]["TwoPhotonSeries"][0]
