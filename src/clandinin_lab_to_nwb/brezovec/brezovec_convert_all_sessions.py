@@ -28,7 +28,6 @@ metadata_list = path_expander.expand_paths(source_data_spec)
 metadata_list = [m for m in metadata_list if Path(m["source_data"]["imaging"]["folder_path"]).is_dir()]
 # Filter over flies to get only the directories that contain both functional and anatomical imaging
 metadata_list = [m for m in metadata_list if "fly" in Path(m["source_data"]["imaging"]["folder_path"]).name]
-
 for index, metadata in enumerate(metadata_list):
     if verbose:
         print("-" * 80)
