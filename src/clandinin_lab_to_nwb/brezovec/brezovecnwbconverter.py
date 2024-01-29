@@ -1,4 +1,5 @@
 """Primary NWBConverter class for this dataset."""
+
 from typing import Optional
 from pathlib import Path
 from neuroconv.utils.dict import DeepDict
